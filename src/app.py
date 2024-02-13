@@ -1,5 +1,6 @@
 import wx
 from wx.lib.masked import NumCtrl
+import wx.lib.scrolledpanel
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
 from matplotlib.backends.backend_wx import NavigationToolbar2Wx
 from matplotlib.figure import Figure
@@ -34,6 +35,7 @@ class PanelAnimatedFigure(wx.Panel):
 	def LoadFigure(self,figure):
 		old=self.canvas
 		self.Freeze()
+		self.Disable()
 		self.canvas = FigureCanvas(self, -1, figure)
 		self.sizer = wx.BoxSizer(wx.HORIZONTAL)
 		self.sizer.Add(self.canvas, 1, wx.LEFT)
@@ -43,11 +45,36 @@ class PanelAnimatedFigure(wx.Panel):
 		# ~ self.Refresh()
 		# ~ self.Fit()
 		old.Destroy()
+		self.Enable()
 		self.Thaw()
 		# ~ self.Refresh()
 		
 
-
+class PanelNumericInput(wx.Panel):
+	def __init__(self, parent, name="", def_val=1,integerWidth = 6,fractionWidth = 2, unit=""):
+		wx.Panel.__init__(self, parent)
+		
+		self.label=wx.StaticText(self, label=name, style=wx.ALIGN_RIGHT)
+		self.eq=wx.StaticText(self, label=" = ",)
+		self.num_ctrl = NumCtrl(self, value=def_val, integerWidth = integerWidth,fractionWidth = fractionWidth,allowNone = False,allowNegative = False,)
+		self.unit=wx.StaticText(self, label=unit)
+		
+		self.sizer_h=wx.BoxSizer(wx.HORIZONTAL)
+		
+		self.sizer_h.Add(self.label, 1, wx.ALL | wx.ALIGN_CENTER_VERTICAL , 0) 
+		self.sizer_h.Add(self.eq, 0, wx.ALL | wx.ALIGN_CENTER_VERTICAL , 0) 
+		self.sizer_h.Add(self.num_ctrl, 2, wx.ALL | wx.ALIGN_CENTER_VERTICAL , 0)
+		self.sizer_h.Add(self.unit, 2, wx.LEFT | wx.ALIGN_CENTER_VERTICAL , 5)
+		
+		self.SetSizer(self.sizer_h)
+		self.Fit()
+		
+	def GetValue(self):
+		return self.num_ctrl.GetValue()
+	def SetValue(self, val):
+		self.num_ctrl.SetValue(val)
+		
+		
 class PanelLayer(wx.Panel):
 	def __init__(self, parent):
 		wx.Panel.__init__(self, parent)
@@ -55,52 +82,29 @@ class PanelLayer(wx.Panel):
 		
 		
 		
-		self.sizer_h1=wx.BoxSizer(wx.HORIZONTAL)
-		label=wx.StaticText(self, label="e=")
-		self.width_ctrl = NumCtrl(self, value=1, integerWidth = 6,fractionWidth = 2,allowNone = False,allowNegative = False,)
-			
-		self.sizer_h1.Add(label, 0, wx.ALL | wx.EXPAND, 3) 
-		self.sizer_h1.Add(self.width_ctrl, 0, wx.ALL | wx.EXPAND, 3) 
-		
-		self.sizer.Add(self.sizer_h1)
+		self.input_layer_width=PanelNumericInput(self,name="e", unit="m")		
+		self.sizer.Add(self.input_layer_width)
 		
 		self.list_choices=["custom"]+DefaultMaterialList()
 		
 		self.typechoice= wx.Choice(self,choices=self.list_choices)
 		self.typechoice.SetSelection(0)
 		self.typechoice.Bind(wx.EVT_CHOICE, self.on_choice_mat)
-		self.sizer.Add(self.typechoice, 0, wx.ALL | wx.EXPAND, 3)
+		self.sizer.Add(self.typechoice, 0, wx.ALL | wx.EXPAND , 3)
 		
 		
 		# ask for mat param 1: lambda
-		self.sizer_h2=wx.BoxSizer(wx.HORIZONTAL)
-		label=wx.StaticText(self, label="la=")
-		self.mat_la_ctrl = NumCtrl(self, value=1, integerWidth = 6,fractionWidth = 2,allowNone = False,allowNegative = False,)
-			
-		self.sizer_h2.Add(label, 0, wx.ALL | wx.EXPAND, 3) 
-		self.sizer_h2.Add(self.mat_la_ctrl, 0, wx.ALL | wx.EXPAND, 3) 
-		
-		self.sizer.Add(self.sizer_h2)
+		self.input_layer_mat_lambda=PanelNumericInput(self,name="la", unit="W/m/K")		
+		self.sizer.Add(self.input_layer_mat_lambda)
+
 		
 		# ask for mat param 2: rho
-		self.sizer_h3=wx.BoxSizer(wx.HORIZONTAL)
-		label=wx.StaticText(self, label="rho=")
-		self.mat_rho_ctrl = NumCtrl(self, value=1, integerWidth = 6,fractionWidth = 2,allowNone = False,allowNegative = False,)
-			
-		self.sizer_h3.Add(label, 0, wx.ALL | wx.EXPAND, 3) 
-		self.sizer_h3.Add(self.mat_rho_ctrl, 0, wx.ALL | wx.EXPAND, 3) 
-		
-		self.sizer.Add(self.sizer_h3)
+		self.input_layer_mat_rho=PanelNumericInput(self,name="rho",unit="kg/m3")		
+		self.sizer.Add(self.input_layer_mat_rho)
 		
 		# ask for mat param 3: Cp
-		self.sizer_h4=wx.BoxSizer(wx.HORIZONTAL)
-		label=wx.StaticText(self, label="Cp=")
-		self.mat_cp_ctrl = NumCtrl(self, value=1, integerWidth = 6,fractionWidth = 2,allowNone = False,allowNegative = False,)
-			
-		self.sizer_h4.Add(label, 0, wx.ALL | wx.EXPAND, 3) 
-		self.sizer_h4.Add(self.mat_cp_ctrl, 0, wx.ALL | wx.EXPAND, 3) 
-		
-		self.sizer.Add(self.sizer_h4)
+		self.input_layer_mat_cp=PanelNumericInput(self,name="Cp",unit="J/kg/K")		
+		self.sizer.Add(self.input_layer_mat_cp)
 		
 		
 
@@ -112,32 +116,49 @@ class PanelLayer(wx.Panel):
 		mat_name=self.list_choices[iselect]
 		if iselect>0:
 			mat=DefaultMaterials[mat_name]
-			self.mat_la_ctrl.SetValue(mat.la)
-			self.mat_la_ctrl.Disable()
-			self.mat_rho_ctrl.SetValue(mat.rho)
-			self.mat_rho_ctrl.Disable()
-			self.mat_cp_ctrl.SetValue(mat.Cp)
-			self.mat_cp_ctrl.Disable()
+			self.input_layer_mat_lambda.SetValue(mat.la)
+			self.input_layer_mat_lambda.Disable()
+			self.input_layer_mat_rho.SetValue(mat.rho)
+			self.input_layer_mat_rho.Disable()
+			self.input_layer_mat_cp.SetValue(mat.Cp)
+			self.input_layer_mat_cp.Disable()
 		else:
-			self.mat_la_ctrl.Enable()
-			self.mat_rho_ctrl.Enable()
-			self.mat_cp_ctrl.Enable()
+			self.input_layer_mat_lambda.Enable()
+			self.input_layer_mat_rho.Enable()
+			self.input_layer_mat_cp.Enable()
 		# ~ print("on_choice was triggered. Selected item is: " + str(self.typechoice.GetSelection()))
 		
 		
 	def get_layer(self):
-		la=self.mat_la_ctrl.GetValue()
-		rho=self.mat_rho_ctrl.GetValue()
-		Cp=self.mat_cp_ctrl.GetValue()
-		mat=Material(la=la, rho=rho, Cp=Cp)
-		e=self.width_ctrl.GetValue()
+		la=self.input_layer_mat_lambda.GetValue()
+		rho=self.input_layer_mat_rho.GetValue()
+		Cp=self.input_layer_mat_cp.GetValue()
+		
+		iselect=self.typechoice.GetSelection()
+		mat_name=self.list_choices[iselect]
+		
+		mat=Material(la=la, rho=rho, Cp=Cp, name=mat_name)
+		
+		e=self.input_layer_width.GetValue()
+		
 		layer=Layer(e=e, mat=mat)
 		return layer
+		
+	def set_layer(self, layer):
+		self.typechoice.SetSelection(0)
+		self.input_layer_width.SetValue(layer.e)
+		self.input_layer_mat_lambda.SetValue(layer.mat.la)
+		self.input_layer_mat_rho.SetValue(layer.mat.rho)
+		self.input_layer_mat_cp.SetValue(layer.mat.Cp)
+
 		
 class PanelLayerList(wx.Panel):
 	def __init__(self, parent):
 		wx.Panel.__init__(self, parent)
+		# ~ wx.lib.scrolledpanel.ScrolledPanel.__init__(self, parent,size=(wx.DisplaySize()[0],200))
+		# ~ self.SetupScrolling()
 		self.parent=parent
+		
 		self.sizer_h = wx.BoxSizer(wx.HORIZONTAL)
 		self.layer_panels=[PanelLayer(self)]
 		
@@ -154,6 +175,7 @@ class PanelLayerList(wx.Panel):
 		self.sizer_h.Add(lay, 0, wx.LEFT, 5)
 		self.Fit()
 		self.parent.Fit()
+
 	def remove_layer(self, event):
 		if len(self.layer_panels)>1:
 			self.layer_panels.pop().Destroy()
@@ -167,9 +189,10 @@ class PanelLayerMgr(wx.Panel):
 		
 		self.sizer_h = wx.BoxSizer(wx.HORIZONTAL)
 		
+		self.button_freeze= wx.Button(self, label="Edit layers")
 		self.button_add= wx.Button(self, label='Add layer')
 		self.button_remove= wx.Button(self, label='Remove layer')
-		self.button_freeze= wx.Button(self, label="Edit layers")
+		
 		
 		
 		self.sizer_h.Add(self.button_freeze, 0, wx.LEFT, 5)
@@ -228,31 +251,25 @@ class PanelLayerMgr(wx.Panel):
 			
 class MainFrame(wx.Frame):   
 	def __init__(self):
-		super().__init__(parent=None, title='Hello World',size=(1000, 800))
+		super().__init__(parent=None, title='wall-simulator',size=(1000, 1000))
 		
 		
 		wall=Wall()
 		
-		dt=0.08
+		dt=1
 		wall.set_time_step(dt)
 		
-		mat1=Material(la=0.05,rho=1,Cp=1)
-		mat2=Material(la=0.4,rho=3,Cp=1)
+		mat1=Material(la=1,rho=1,Cp=1)
+
 		
 		layer1=Layer(e=1, mat=mat1)
-		layer2=Layer(e=2, mat=mat2)
-		
+	
 		wall.add_layer(layer1)
-		wall.add_layer(layer2)
 		
 		wall.set_inside_temp(19)
 		wall.set_outside_temp(5)
 		
 		
-		
-		print(wall.courant)
-	
-		# ~ wall.solve_stationnary()
 		wall.draw()
 		
 		self.wall=wall
@@ -263,6 +280,8 @@ class MainFrame(wx.Frame):
 		self.run_sim=False
 		
 		
+		# main vertical sizer
+		self.sizer_v = wx.BoxSizer(wx.VERTICAL)
 		
 # =============================================================================
 # panel with main actions
@@ -282,29 +301,56 @@ class MainFrame(wx.Frame):
 		self.button_reset.Bind(wx.EVT_BUTTON, self.on_press_reset)
 		sizer_h.Add(self.button_reset, 0, wx.LEFT, 5)
 		
+
+		
 		panel_menu.SetSizer(sizer_h)
 		
+		self.sizer_v.Add(panel_menu,0, wx.TOP,5)
+# =============================================================================
+# panel to change global parameters
+# =============================================================================
+		panel_params=wx.Panel(self)
+		sizer_h = wx.BoxSizer(wx.HORIZONTAL)
+		
+		self.button_get_params = wx.Button(panel_params, label='Apply params')
+		self.button_get_params.Bind(wx.EVT_BUTTON, self.on_press_get_params)
+		sizer_h.Add(self.button_get_params, 1, wx.LEFT, 4)
+		
+		panel_params.input_dt=PanelNumericInput(panel_params, name="dt",unit="s", def_val=wall.dt,fractionWidth = 6)
+		sizer_h.Add(panel_params.input_dt, 1, wx.LEFT, 5)
+		
+		panel_params.input_int_temp=PanelNumericInput(panel_params, name="Tint",unit="°C", def_val=wall.Tint)
+		sizer_h.Add(panel_params.input_int_temp, 1, wx.LEFT, 5)
+		
+		panel_params.input_out_temp=PanelNumericInput(panel_params, name="Tout",unit="°C", def_val=wall.Tout)
+		sizer_h.Add(panel_params.input_out_temp, 1, wx.LEFT, 5)
+		
+		panel_params.slider=wx.Slider(panel_params,minValue=-20, maxValue=50, style=wx.SL_LABELS)
+		sizer_h.Add(panel_params.slider, 5, wx.ALL, 5)
+		
+		panel_params.SetSizer(sizer_h)
+		self.panel_params=panel_params
+		self.sizer_v.Add(self.panel_params,0, wx.ALL | wx.TOP,5)
 # =============================================================================
 # panel to manage layer
 # =============================================================================
 		self.layermgr=PanelLayerMgr(self)
+		self.sizer_v.Add(self.layermgr,0, wx.ALL | wx.TOP,5)
 # =============================================================================
 # panel to show animated figure
 # =============================================================================
 		self.panelfig = PanelAnimatedFigure(self, self.wall.figure)
-		
-		
-# =============================================================================
-# panel to show figure
-# =============================================================================
-		self.sizer_v = wx.BoxSizer(wx.VERTICAL)
-		self.sizer_v.Add(panel_menu,0, wx.TOP,5)
-		
-		
-		self.sizer_v.Add(self.layermgr,0, wx.ALL | wx.TOP,5)
 		self.sizer_v.Add(self.panelfig, 0, wx.ALL | wx.TOP, 5)
 		
+	
+		# set the main sizer
 		self.SetSizer(self.sizer_v)
+		
+		
+		
+		
+		
+		
 		
 # =============================================================================
 # bindings
@@ -325,9 +371,11 @@ class MainFrame(wx.Frame):
 		if self.run_sim:
 			self.timer.Start(30)
 			self.button_run.SetLabel("Pause")
+			self.panel_params.input_dt.Disable()
 		else:
 			self.timer.Stop()
 			self.button_run.SetLabel("Run")
+			self.panel_params.input_dt.Enable()
 			
 		# ~ self.text_ctrl = wx.TextCtrl(panel)
 		# ~ my_sizer.Add(self.text_ctrl, 0, wx.ALL | wx.EXPAND, 5)    
@@ -340,7 +388,9 @@ class MainFrame(wx.Frame):
 	def on_receive_layers(self, event):
 		layers=event.GetLayers()
 		self.wall.change_layers(layers)
-		print(len(self.wall.layers))
+		
+		
+		# ~ print(len(self.wall.layers))
 		self.redraw()
 		# ~ self.wall.ax.clear()
 		# ~ self.wall.draw_wall()
@@ -350,11 +400,28 @@ class MainFrame(wx.Frame):
 		
 	def on_press_statio(self,event):
 		self.wall.solve_stationnary()
+		self.wall.time=0
 		self.redraw()
 		
 	def on_press_reset(self,event):
 		self.wall.remesh()
 		self.redraw()
+		
+	def on_press_get_params(self, event):
+		dt = self.panel_params.input_dt.GetValue()
+		Tint= self.panel_params.input_int_temp.GetValue()
+		Tout= self.panel_params.input_out_temp.GetValue()
+		
+		self.wall.set_inside_temp(Tint)
+		self.wall.set_outside_temp(Tout)
+		
+		if dt<1e-8:
+			print("Entered dt too close to zero or negative.")
+		elif abs(dt-self.wall.dt)/dt > 0.001:
+			self.wall.set_time_step(dt)
+		self.redraw()
+
+		
 
 	def update_sim(self,event):
 
@@ -363,6 +430,7 @@ class MainFrame(wx.Frame):
 
 	
 	def redraw(self):
+		self.panel_params.input_dt.SetValue(self.wall.dt)
 		self.wall.draw()
 		self.panelfig.LoadFigure(self.wall.figure)
 
