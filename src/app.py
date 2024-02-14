@@ -28,6 +28,7 @@ class PanelAnimatedFigure(wx.Panel):
     def __init__(self, parent, figure):
         wx.Panel.__init__(self, parent)
         self.canvas = FigureCanvas(self, -1, figure)
+        self.canvas.draw_idle()
         self.sizer = wx.BoxSizer(wx.HORIZONTAL)
         self.sizer.Add(self.canvas, 1, wx.ALL | wx.EXPAND)
         self.SetSizer(self.sizer)
@@ -37,11 +38,12 @@ class PanelAnimatedFigure(wx.Panel):
         self.Freeze()
         self.Disable()
         self.canvas = FigureCanvas(self, -1, figure)
+        self.canvas.draw_idle()
         self.sizer = wx.BoxSizer(wx.HORIZONTAL)
         self.sizer.Add(self.canvas, 1, wx.LEFT)
         self.SetSizer(self.sizer)
         self.Fit()
-        # ~ self.canvas.draw()
+        
         old.Destroy()
         self.Enable()
         self.Thaw()
@@ -243,8 +245,46 @@ class PanelLayerMgr(wx.Panel):
             layer = panel_layer.get_layer()
             layers.append(layer)
         return layers
+
+class PanelTempControl(wx.Panel):
+    def __init__(self, parent):
+        wx.Panel.__init__(self, parent)
+        
+        sizer_h = wx.BoxSizer(wx.HORIZONTAL)
+        
+        
+        self.slider_Tint=wx.Slider(self,minValue=-20, maxValue=50, style=wx.SL_LABELS, size=(300,-1), name="Tint")
+        sizer_h.Add(self.slider_Tint, 5, wx.LEFT | wx.EXPAND, 5)
+        
+        self.slider_Tout=wx.Slider(self,minValue=-20, maxValue=50, style=wx.SL_LABELS, size=(300,-1))
+        sizer_h.Add(self.slider_Tout, 5, wx.LEFT | wx.EXPAND, 5)
+        
+        self.SetSizer(sizer_h)
+        
+        self.Fit()
         
 
+        
+        
+class PanelWallInfo(wx.Panel):
+    def __init__(self, parent):
+        wx.Panel.__init__(self, parent)
+        
+        self.sizer_v = wx.BoxSizer(wx.VERTICAL)
+        
+        self.info_dt=wx.StaticText(self,label="")
+        self.sizer_v.Add(self.info_dt, 0, wx.LEFT, 3)
+        
+        self.info_phi=wx.StaticText(self,label="")
+        self.sizer_v.Add(self.info_phi, 0, wx.LEFT, 3)
+        
+        self.SetSizer(self.sizer_v)
+        self.Fit()
+        
+    def update_info(self,wall):
+        self.info_dt.SetLabel("dt = %g s" % wall.dt)
+        self.info_phi.SetLabel("Thermal flux from int to out = %g W/m²" % wall.compute_phi())
+        self.Fit()
             
 class MainFrame(wx.Frame):   
     def __init__(self):
@@ -304,30 +344,15 @@ class MainFrame(wx.Frame):
         
         self.sizer_v.Add(panel_menu,0, wx.TOP,5)
 # =============================================================================
-# panel to change global parameters
+# panel to control temperature inside and outside
 # =============================================================================
-        panel_params=wx.Panel(self)
-        sizer_h = wx.BoxSizer(wx.HORIZONTAL)
+        self.panel_temp_control=PanelTempControl(self)        
         
-        self.button_get_params = wx.Button(panel_params, label='Apply params')
-        self.button_get_params.Bind(wx.EVT_BUTTON, self.on_press_get_params)
-        sizer_h.Add(self.button_get_params, 1, wx.LEFT, 4)
-        
-        panel_params.input_dt=PanelNumericInput(panel_params, name="dt",unit="s", def_val=wall.dt,fractionWidth = 6)
-        sizer_h.Add(panel_params.input_dt, 1, wx.LEFT, 5)
-        
-        panel_params.input_int_temp=PanelNumericInput(panel_params, name="Tint",unit="°C", def_val=wall.Tint)
-        sizer_h.Add(panel_params.input_int_temp, 1, wx.LEFT, 5)
-        
-        panel_params.input_out_temp=PanelNumericInput(panel_params, name="Tout",unit="°C", def_val=wall.Tout)
-        sizer_h.Add(panel_params.input_out_temp, 1, wx.LEFT, 5)
-        
-        panel_params.slider=wx.Slider(panel_params,minValue=-20, maxValue=50, style=wx.SL_LABELS)
-        sizer_h.Add(panel_params.slider, 5, wx.ALL, 5)
-        
-        panel_params.SetSizer(sizer_h)
-        self.panel_params=panel_params
-        self.sizer_v.Add(self.panel_params,0, wx.ALL | wx.TOP,5)
+        self.panel_temp_control.slider_Tint.Bind(wx.EVT_SLIDER, self.on_slide_Tint)
+
+        self.panel_temp_control.slider_Tout.Bind(wx.EVT_SLIDER, self.on_slide_Tout)
+
+        self.sizer_v.Add(self.panel_temp_control,0, wx.ALL | wx.TOP,5)
 # =============================================================================
 # panel to manage layer
 # =============================================================================
@@ -336,9 +361,25 @@ class MainFrame(wx.Frame):
 # =============================================================================
 # panel to show animated figure
 # =============================================================================
-        self.panelfig = PanelAnimatedFigure(self, self.wall.figure)
-        self.sizer_v.Add(self.panelfig, 0, wx.ALL | wx.TOP, 5)
         
+        
+        
+        self.panel_fig_info = wx.Panel(self)
+        
+        self.sizer_h_fig_info = wx.BoxSizer(wx.HORIZONTAL)
+        
+        self.panelfig = PanelAnimatedFigure(self.panel_fig_info, self.wall.figure)
+        self.sizer_h_fig_info.Add(self.panelfig, 1, wx.ALL | wx.SHAPED, 5)
+        
+        self.panel_info=PanelWallInfo(self.panel_fig_info)
+        self.panel_info.update_info(self.wall)
+        
+        self.sizer_h_fig_info.Add(self.panel_info, 1, wx.ALL | wx.SHAPED, 5)
+        
+        self.panel_fig_info.SetSizer(self.sizer_h_fig_info)
+        
+        
+        self.sizer_v.Add(self.panel_fig_info, 1, wx.ALL | wx.EXPAND, 5)
     
         # set the main sizer
         self.SetSizer(self.sizer_v)
@@ -369,11 +410,9 @@ class MainFrame(wx.Frame):
         if self.run_sim:
             self.timer.Start(30)
             self.button_run.SetLabel("Pause")
-            self.panel_params.input_dt.Disable()
         else:
             self.timer.Stop()
             self.button_run.SetLabel("Run")
-            self.panel_params.input_dt.Enable()
             
             
     def on_receive_layers(self, event):
@@ -390,20 +429,30 @@ class MainFrame(wx.Frame):
         self.wall.remesh()
         self.redraw()
         
-    def on_press_get_params(self, event):
-        dt = self.panel_params.input_dt.GetValue()
-        Tint= self.panel_params.input_int_temp.GetValue()
-        Tout= self.panel_params.input_out_temp.GetValue()
+#    def on_press_get_params(self, event):
+#        dt = self.panel_params.input_dt.GetValue()
+#        Tint= self.panel_params.input_int_temp.GetValue()
+#        Tout= self.panel_params.input_out_temp.GetValue()
+#        
+#        self.wall.set_inside_temp(Tint)
+#        self.wall.set_outside_temp(Tout)
+#        
+#        if dt<1e-8:
+#            print("Entered dt too close to zero or negative.")
+#        elif abs(dt-self.wall.dt)/dt > 0.001:
+#            self.wall.set_time_step(dt)
+#        self.redraw()
         
+    def on_slide_Tint(self,event):
+        Tint= self.panel_temp_control.slider_Tint.GetValue()
         self.wall.set_inside_temp(Tint)
+        if not(self.run_sim):
+            self.redraw()
+    def on_slide_Tout(self,event):
+        Tout= self.panel_temp_control.slider_Tout.GetValue()
         self.wall.set_outside_temp(Tout)
-        
-        if dt<1e-8:
-            print("Entered dt too close to zero or negative.")
-        elif abs(dt-self.wall.dt)/dt > 0.001:
-            self.wall.set_time_step(dt)
-        self.redraw()
-
+        if not(self.run_sim):
+            self.redraw()
         
 
     def update_sim(self,event):
@@ -413,7 +462,7 @@ class MainFrame(wx.Frame):
 
     
     def redraw(self):
-        self.panel_params.input_dt.SetValue(self.wall.dt)
+        self.panel_info.update_info(self.wall)
         self.wall.draw()
         self.panelfig.LoadFigure(self.wall.figure)
 
