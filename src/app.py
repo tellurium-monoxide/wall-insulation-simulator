@@ -275,15 +275,25 @@ class PanelWallInfo(wx.Panel):
         self.info_dt=wx.StaticText(self,label="")
         self.sizer_v.Add(self.info_dt, 0, wx.LEFT, 3)
         
+        self.info_Rth=wx.StaticText(self,label="")
+        self.sizer_v.Add(self.info_Rth, 0, wx.LEFT, 3)
+        
         self.info_phi=wx.StaticText(self,label="")
         self.sizer_v.Add(self.info_phi, 0, wx.LEFT, 3)
+        self.info_phi2=wx.StaticText(self,label="")
+        self.sizer_v.Add(self.info_phi2, 0, wx.LEFT, 3)
         
         self.SetSizer(self.sizer_v)
         self.Fit()
         
     def update_info(self,wall):
         self.info_dt.SetLabel("dt = %g s" % wall.dt)
-        self.info_phi.SetLabel("Thermal flux from int to out = %g W/m²" % wall.compute_phi())
+        Rth=sum([l.Rth for l in wall.layers])
+        self.info_Rth.SetLabel("Total thermal resistance = %g K.m²/W" % Rth)
+        phi_int_to_wall=wall.compute_phi()
+        self.info_phi.SetLabel("Thermal flux from interior to wall = %g W/m²" % phi_int_to_wall)
+        phi_int_to_out = (wall.Tout-wall.Tint) / Rth
+        self.info_phi2.SetLabel("Thermal flux from interior to out  = %g W/m²" % phi_int_to_out)
         self.Fit()
             
 class MainFrame(wx.Frame):   

@@ -119,9 +119,11 @@ class Wall:
             layer=self.layers[i]
             
             dx = (layer.mat.D * self.dt / self.courant) ** 0.5
-            layer.dx=dx
-            layer.Npoints= int(layer.e / dx)+1
+            
+            layer.Npoints= max(int(layer.e / dx)+1,2)
             layer.xmesh=np.linspace(self.wall_length,self.wall_length+layer.e,layer.Npoints)
+            
+            layer.dx=layer.xmesh[1]-layer.xmesh[0]
             layer.Tmesh=np.zeros(layer.Npoints)
             
             self.wall_length+=layer.e
@@ -226,11 +228,15 @@ class Wall:
     
     def compute_phi(self):
         phi=0
-        for i in range(len(self.layers)):
+#        for i in range(len(self.layers)):
 #            layer=self.layers[i]
-            T=self.layers[i].Tmesh
-            for j in range(1,len(T)):
-                phi+= (T[j] - T[j-1])/self.layers[i].Rth * self.layers[i].dx
+#            T=layer.Tmesh
+#            for j in range(1,len(T)):
+#                phi+= (T[j] - T[j-1])/layer.Rth * layer.dx
+        layer=self.layers[0]
+        T=layer.Tmesh
+        R=layer.dx/layer.mat.la
+        phi= (T[1]-T[0]) /R
         return phi
                 
                 
