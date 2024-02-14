@@ -170,6 +170,14 @@ class Wall:
     
     def draw(self):
         self.ax.clear()
+        
+        wl=self.wall_length
+        hspace=wl/3
+        self.ax.set_xlim([-hspace,wl+hspace])
+        vspace=5
+        self.ax.set_ylim([min(self.Tout,self.Tint)-vspace, max(self.Tout,self.Tint)+vspace])
+        
+        
         x0=0
         self.ax.axvline(x=x0, color="k")
         for i in range(len(self.layers)):
@@ -177,33 +185,29 @@ class Wall:
             e=layer.e
             x0+=e
             self.ax.axvline(x=x0, color="k")
-            self.ax.text(x0-e,self.Tint+1,"%s\nNx=%d" %(layer.mat.name, layer.Npoints))
-            # ~ legend="D=%4.2f\n" %(self.diffs[i])
-            # ~ legend+="Rth=%4.1f\n" % self.Rth[i]
-            # ~ legend+="$\lambda$=%4.2f\n" % self.layers[i].la
-            # ~ legend+="rhoCp=%4.1f" % (self.layers[i].rho*self.layers[i].Cp)
-            # ~ self.ax.text(x0-e,-3,legend, va="top")
+            self.ax.text(x0-e,max(self.Tout,self.Tint)+2,"%s\nNx=%d" %(layer.mat.name, layer.Npoints))
+
         
         
-        self.ax.text(-x0/2,self.Tint+1,"Room")
+        self.ax.text(-hspace,max(self.Tout,self.Tint)+2,"Room")
         
         
-        self.ax.text(x0,self.Tint+1,"Outside")
-        self.ax.set_xlim([-x0/2,1.5*x0])
-        self.ax.set_ylim([self.Tout-5, self.Tint+5])
+        self.ax.text(wl,max(self.Tout,self.Tint)+2,"Outside")
         
-        self.plot_Tint=self.ax.plot([-self.wall_length,0],[self.Tint,self.Tint],color="r")
-        self.plot_Tout=self.ax.plot([self.wall_length,2*self.wall_length],[self.Tout,self.Tout],color="cyan")
-        self.Tplots=[]
+        
+        self.ax.plot([-self.wall_length,0],[self.Tint,self.Tint],color="r")
+        self.ax.plot([self.wall_length,2*self.wall_length],[self.Tout,self.Tout],color="cyan")
+        
         for i in range(len(self.layers)):
-            self.Tplots.append(self.ax.plot(self.layers[i].xmesh,self.layers[i].Tmesh))
-            
+            self.ax.plot(self.layers[i].xmesh,self.layers[i].Tmesh)
+          
+        self.ax.set_ylabel("Position (m)")
         self.ax.set_ylabel("Temperature (°C)")
         
-        phi_in_to_out=self.compute_phi()
+#        phi_in_to_out=self.compute_phi()
         
-        flux_text="Thermal flux\n %5.2f W/m²" % phi_in_to_out
-        self.text_flux=self.ax.text(-self.wall_length/4,self.Tint-5,flux_text, ha="center")
+#        flux_text="Thermal flux\n %5.2f W/m²" % phi_in_to_out
+#        self.text_flux=self.ax.text(-self.wall_length/4,self.Tint-5,flux_text, ha="center")
         
         self.ax.set_title("Time = %s" % format_time(self.time))
         
