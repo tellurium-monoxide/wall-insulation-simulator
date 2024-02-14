@@ -35,6 +35,7 @@ class Material:
 
         self.D=la / ( rho * Cp)
         self.rhoCp= rho*Cp
+        self.effusivity= (la * rho * Cp) **0.5
 
 
 DefaultMaterials={}
@@ -53,14 +54,19 @@ def DefaultMaterialList():
 default=Material(la=1,Cp=1, rho=1, name="default")
 register_material(default)
 
-glassfiber=Material(la=0.039,Cp=1030, rho=30, name="glass fiber")
-register_material(glassfiber)
 
-woodfiber=Material(la=0.041,Cp=2000, rho=60, name="wood fiber")
-register_material(woodfiber)
+# taken from http://meteo.re.free.fr/thermo.php :
+register_material(Material(la=0.038,Cp=2100, rho=55, name="Laine de bois"))
+register_material(Material(la=0.024,Cp=1400, rho=32, name="Polyurethane PUR"))
+register_material(Material(la=0.330,Cp=792, rho=790, name="BA13"))
+register_material(Material(la=0.032,Cp=1450, rho=15, name="polystyrene gris EPS"))
+register_material(Material(la=1.050,Cp=648, rho=1300, name="parpaing"))
+register_material(Material(la=0.032,Cp=1030, rho=29, name="Laine de verre GR32"))
+register_material(Material(la=0.040,Cp=1030, rho=15, name="Laine de verre"))
+register_material(Material(la=0.038,Cp=1860, rho=60, name="Ouate de cellulose"))
 
-concrete=Material(la=2,Cp=840, rho=2200, name="concrete")
-register_material(concrete)
+# others:
+register_material(Material(la=2,Cp=840, rho=2200, name="Béton"))
 
 class Layer:
     def __init__(self,e = 1, mat=Material()):
@@ -68,6 +74,24 @@ class Layer:
         self.mat=mat
 
         self.Rth = e / mat.la
+        
+        
+class WallScenario:
+    def __init__(self, layers):
+        self.layers=[]
+        for named_layer in layers:
+            layer=Layer (named_layer[0], DefaultMaterials[named_layer[1]])
+            self.layers.append(layer)
+            
+            
+DefaultScenarios={}
+def register_scenario(name, scenario):
+    DefaultScenarios[name]=scenario
+
+
+register_scenario("Isolation intérieur laine de bois", WallScenario([(0.15, "Laine de bois"), (0.4, "Béton")]))
+
+
 
 
 def format_time(t):
@@ -92,8 +116,7 @@ def format_time(t):
 class Wall:
 
     def __init__(self):
-        self.figure = Figure(tight_layout=True)
-#        self.axes = self.figure.add_subplot(111)
+        self.figure = Figure()
         self.ax=self.figure.add_axes([0,0,1,1])
 
 
@@ -136,15 +159,12 @@ class Wall:
 
     def add_layer(self, layer):
         self.layers.append(layer)
-        self.remesh()
 
         dt= (layer.e/NPOINT_PREFERRED_PER_LAYER)**2 * self.courant / layer.mat.D
         self.set_time_step(dt)
         # ~ layerNmax=max(self.layers, key = lambda x:x.Npoints)
         layerNmin=min(self.layers, key = lambda x:x.Npoints)
-        # ~ idNmax= min(range(len(self.layers)), key=lambda i:self.layers[i].Npoints)
         if layerNmin.Npoints<5:
-
             dt= (layerNmin.e/NPOINT_MINIMAL_PER_LAYER)**2 * self.courant / layerNmin.mat.D
             self.set_time_step(dt)
 
@@ -172,6 +192,8 @@ class Wall:
         self.remesh()
 
 
+    def get_formatted_time(self):
+        return format_time(self.time)
 
 
     def draw(self):
@@ -184,7 +206,7 @@ class Wall:
         wl=self.wall_length
         hspace=wl/3
         self.ax.set_xlim([-hspace,wl+hspace])
-        vspace=0.1
+        vspace=1
         self.ax.set_ylim([self.Tmin-vspace, self.Tmax+vspace])
 
         layer_name_height=self.Tmax-1
@@ -195,9 +217,12 @@ class Wall:
             e=layer.e
             x0+=e
             self.ax.axvline(x=x0, color="k")
-            self.ax.text(x0-e,layer_name_height,"%s" %(layer.mat.name))
+            self.ax.text(x0-e+0.002,layer_name_height,"%s" %(layer.mat.name),rotation=90,verticalalignment='top', fontsize=9)
 
-
+        for T in range(self.Tmin, self.Tmax+1,5):
+            self.ax.axhline(y=T, color="lightgrey", linestyle="--", linewidth=0.7)
+            self.ax.text(-hspace,T+0.1,"%d" %(T), color="lightgrey", fontsize=9)
+            self.ax.text(wl+hspace,T+0.1,"%d" %(T), color="lightgrey", fontsize=9,horizontalalignment='right')
 
         self.ax.text(-hspace,layer_name_height,"Room")
 

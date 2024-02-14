@@ -5,7 +5,7 @@ from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
 #from matplotlib.backends.backend_wx import NavigationToolbar2Wx
 
 
-from wall import Wall, Layer, Material, DefaultMaterialList, DefaultMaterials
+from wall import Wall, Layer, Material, DefaultMaterials, DefaultScenarios
 
 
 myEVT_NEW_LAYERS = wx.NewEventType()
@@ -52,7 +52,7 @@ class PanelAnimatedFigure(wx.Panel):
 
 
 class PanelNumericInput(wx.Panel):
-    def __init__(self, parent, name="", def_val=1,integerWidth = 6,fractionWidth = 2, unit=""):
+    def __init__(self, parent, name="", def_val=1,integerWidth = 6,fractionWidth = 3, unit=""):
         wx.Panel.__init__(self, parent)
 
         self.def_val=def_val
@@ -87,7 +87,8 @@ class PanelLayer(wx.Panel):
         self.input_layer_width=PanelNumericInput(self,name="e", unit="m")
         self.sizer.Add(self.input_layer_width)
 
-        self.list_choices=["custom"]+DefaultMaterialList()
+        self.list_choices=["custom"]+list(DefaultMaterials.keys())
+        
 
         self.typechoice= wx.Choice(self,choices=self.list_choices)
         self.typechoice.SetSelection(0)
@@ -96,12 +97,12 @@ class PanelLayer(wx.Panel):
 
 
         # ask for mat param 1: lambda
-        self.input_layer_mat_lambda=PanelNumericInput(self,name="la", unit="W/m/K")
+        self.input_layer_mat_lambda=PanelNumericInput(self,name="\u03BB", unit="W/m/K")
         self.sizer.Add(self.input_layer_mat_lambda)
 
 
         # ask for mat param 2: rho
-        self.input_layer_mat_rho=PanelNumericInput(self,name="rho",unit="kg/m3")
+        self.input_layer_mat_rho=PanelNumericInput(self,name="\u03C1",unit="kg/m3")
         self.sizer.Add(self.input_layer_mat_rho)
 
         # ask for mat param 3: Cp
@@ -146,7 +147,11 @@ class PanelLayer(wx.Panel):
         return layer
 
     def set_layer(self, layer):
-        self.typechoice.SetSelection(0)
+        try:
+            mat_id=self.list_choices.index(layer.mat.name)
+        except ValueError:
+            mat_id=0
+        self.typechoice.SetSelection(mat_id)
         self.input_layer_width.SetValue(layer.e)
         self.input_layer_mat_lambda.SetValue(layer.mat.la)
         self.input_layer_mat_rho.SetValue(layer.mat.rho)
@@ -170,18 +175,44 @@ class PanelLayerList(wx.Panel):
         self.Fit()
 
 
-    def add_layer(self, event):
+
+    def add_layer(self):
+        self.Freeze()
         lay= PanelLayer(self)
         self.layer_panels.append(lay)
         self.sizer_h.Add(lay, 0, wx.LEFT, 5)
         self.Fit()
         self.parent.Fit()
+        self.Thaw()
 
-    def remove_layer(self, event):
+    def remove_layer(self):
         if len(self.layer_panels)>1:
             self.layer_panels.pop().Destroy()
             self.Fit()
             self.parent.Fit()
+            return True
+        return False
+        
+    def gather_layers(self):
+        layers=[]
+        for panel_layer in self.layer_panels:
+            layer = panel_layer.get_layer()
+            layers.append(layer)
+        return layers
+        
+    def set_layer_amount(self, n):
+        while len(self.layer_panels)>n:
+            self.remove_layer()
+        while len(self.layer_panels)<n:
+            self.add_layer()
+
+    def load_layers(self,layers):
+        self.Freeze()
+        self.set_layer_amount(len(layers))
+        for i in range(len(layers)):
+            self.layer_panels[i].set_layer(layers[i])
+        self.Thaw()
+        
 
 class PanelLayerMgr(wx.Panel):
     def __init__(self, parent):
@@ -190,15 +221,22 @@ class PanelLayerMgr(wx.Panel):
 
         self.sizer_h = wx.BoxSizer(wx.HORIZONTAL)
 
-        self.button_freeze= wx.Button(self, label="Edit layers")
+        self.button_edit= wx.Button(self, label="Edit layers")
         self.button_add= wx.Button(self, label='Add layer')
         self.button_remove= wx.Button(self, label='Remove layer')
+        self.button_load= wx.Button(self, label='Load')
+        
 
+        self.list_scenarios=["custom"]+list(DefaultScenarios.keys())
+        self.choice_scenario= wx.Choice(self,choices=self.list_scenarios)
+        self.choice_scenario.SetSelection(0)
 
-
-        self.sizer_h.Add(self.button_freeze, 0, wx.LEFT, 5)
-        self.sizer_h.Add(self.button_add, 0, wx.LEFT, 3)
+        self.sizer_h.Add(self.button_edit, 0, wx.LEFT, 5)
+        self.sizer_h.Add(self.button_add, 0, wx.LEFT, 5)
         self.sizer_h.Add(self.button_remove, 0, wx.LEFT, 5)
+        self.sizer_h.AddSpacer(20)
+        self.sizer_h.Add(self.button_load, 0, wx.LEFT, 5)
+        self.sizer_h.Add(self.choice_scenario, 0, wx.LEFT, 5)
 
 
 
@@ -210,43 +248,65 @@ class PanelLayerMgr(wx.Panel):
 
         self.panel_layer_list=PanelLayerList(self)
         self.sizer_v.Add(self.panel_layer_list, 0, wx.LEFT, 3)
-
-        self.button_add.Bind(wx.EVT_BUTTON, self.panel_layer_list.add_layer)
-        self.button_remove.Bind(wx.EVT_BUTTON, self.panel_layer_list.remove_layer)
-        self.button_freeze.Bind(wx.EVT_BUTTON, self.freeze)
+        
+        self.button_edit.Bind(wx.EVT_BUTTON, self.on_press_button_edit)
+        self.button_add.Bind(wx.EVT_BUTTON, self.on_press_add_layer)
+        self.button_remove.Bind(wx.EVT_BUTTON, self.on_press_remove_layer)
+        self.button_load.Bind(wx.EVT_BUTTON, self.on_press_load_scenario)
+        
 
 
         self.SetSizer(self.sizer_v)
         self.Fit()
 
         self.is_frozen=False
-        self.freeze(wx.IdleEvent())
+        self.toggle_edit()
 
-    def freeze(self, event):
+    def on_press_button_edit(self,event):
+        self.toggle_edit()
+        
+    def toggle_edit(self, set_custom=True):
         self.is_frozen=not(self.is_frozen)
         if not(self.is_frozen): # set it to unfrozen state
-            self.button_freeze.SetLabel("Confirm layers")
+            self.button_edit.SetLabel("Confirm")
             self.panel_layer_list.Enable()
             self.button_add.Enable()
             self.button_remove.Enable()
+            if set_custom:
+                self.choice_scenario.SetSelection(0)
             # ~ self.panel_layers.Thaw()
         else:# set to frozen state and send confirmed layers above
-            self.button_freeze.SetLabel("Edit layers")
+            self.button_edit.SetLabel("Edit layers")
             # ~ self.panel_layers.Freeze()
             self.panel_layer_list.Disable()
             self.button_add.Disable()
             self.button_remove.Disable()
-            layers=self.gather_layers()
-            event = EventNewLayers(myEVT_NEW_LAYERS, self.GetId())
-            event.SetLayers(layers)
-            self.GetEventHandler().ProcessEvent(event)
+            self.send_layers()
+            
 
-    def gather_layers(self):
-        layers=[]
-        for panel_layer in self.panel_layer_list.layer_panels:
-            layer = panel_layer.get_layer()
-            layers.append(layer)
-        return layers
+    def send_layers(self):
+        layers=self.panel_layer_list.gather_layers()
+        event = EventNewLayers(myEVT_NEW_LAYERS, self.GetId())
+        event.SetLayers(layers)
+        self.GetEventHandler().ProcessEvent(event)
+        
+    def on_press_add_layer(self, event):
+        self.panel_layer_list.add_layer()
+    def on_press_remove_layer(self, event):
+        self.panel_layer_list.remove_layer()
+        
+    def on_press_load_scenario(self,event):
+        sel=self.choice_scenario.GetSelection()
+        if (self.is_frozen):
+                self.toggle_edit(set_custom=False)
+        if sel>0:
+            scenario_name=self.list_scenarios[sel]
+            scenario=DefaultScenarios[scenario_name]
+            self.panel_layer_list.load_layers(scenario.layers)
+            self.send_layers()
+        if not(self.is_frozen):
+                self.toggle_edit(set_custom=False)
+
 
 class PanelTempControl(wx.Panel):
     def __init__(self, parent, wall):
@@ -278,6 +338,9 @@ class PanelWallInfo(wx.Panel):
 
         self.sizer_v = wx.BoxSizer(wx.VERTICAL)
 
+        self.info_time=wx.StaticText(self,label="")
+        self.sizer_v.Add(self.info_time, 0, wx.LEFT, 3)
+        
         self.info_dt=wx.StaticText(self,label="")
         self.sizer_v.Add(self.info_dt, 0, wx.LEFT, 3)
 
@@ -293,7 +356,8 @@ class PanelWallInfo(wx.Panel):
         self.Fit()
 
     def update_info(self,wall):
-        self.info_dt.SetLabel("dt = %g s" % wall.dt)
+        self.info_time.SetLabel("Time = %s" % wall.get_formatted_time())
+        self.info_dt.SetLabel("Time step = %g s" % wall.dt)
         Rth=sum([l.Rth for l in wall.layers])
         self.info_Rth.SetLabel("Total thermal resistance = %g K.m²/W" % Rth)
         phi_int_to_wall=wall.compute_phi()
@@ -339,26 +403,30 @@ class MainFrame(wx.Frame):
 # =============================================================================
 # panel with main actions
 # =============================================================================
-        panel_menu = wx.Panel(self)
+        self.panel_menu = wx.Panel(self)
         sizer_h = wx.BoxSizer(wx.HORIZONTAL)
 
-        self.button_run = wx.Button(panel_menu, label='Run')
-        self.button_run.Bind(wx.EVT_BUTTON, self.on_press_run)
-        sizer_h.Add(self.button_run, 0, wx.LEFT, 5)
+        self.panel_menu.button_run = wx.Button(self.panel_menu, label='Run')
+        self.panel_menu.button_run.Bind(wx.EVT_BUTTON, self.on_press_run)
+        sizer_h.Add(self.panel_menu.button_run, 0, wx.LEFT, 5)
+        
+        self.panel_menu.button_adv = wx.Button(self.panel_menu, label='Advance one timestep')
+        self.panel_menu.button_adv.Bind(wx.EVT_BUTTON, self.update_sim)
+        sizer_h.Add(self.panel_menu.button_adv, 0, wx.LEFT, 5)
 
-        self.button_statio = wx.Button(panel_menu, label='Set statio')
-        self.button_statio.Bind(wx.EVT_BUTTON, self.on_press_statio)
-        sizer_h.Add(self.button_statio, 0, wx.LEFT, 5)
+        self.panel_menu.button_statio = wx.Button(self.panel_menu, label='Set statio')
+        self.panel_menu.button_statio.Bind(wx.EVT_BUTTON, self.on_press_statio)
+        sizer_h.Add(self.panel_menu.button_statio, 0, wx.LEFT, 5)
 
-        self.button_reset = wx.Button(panel_menu, label='Reset')
-        self.button_reset.Bind(wx.EVT_BUTTON, self.on_press_reset)
-        sizer_h.Add(self.button_reset, 0, wx.LEFT, 5)
+        self.panel_menu.button_reset = wx.Button(self.panel_menu, label='Reset')
+        self.panel_menu.button_reset.Bind(wx.EVT_BUTTON, self.on_press_reset)
+        sizer_h.Add(self.panel_menu.button_reset, 0, wx.LEFT, 5)
 
 
 
-        panel_menu.SetSizer(sizer_h)
+        self.panel_menu.SetSizer(sizer_h)
 
-        self.sizer_v.Add(panel_menu,0, wx.TOP,5)
+        self.sizer_v.Add(self.panel_menu,0, wx.TOP,5)
 # =============================================================================
 # panel to control temperature inside and outside
 # =============================================================================
@@ -381,9 +449,9 @@ class MainFrame(wx.Frame):
 
         self.panel_fig_sliders=wx.Panel(self)
 
-        self.slider_Tint=wx.Slider(self.panel_fig_sliders,value=self.wall.Tint,minValue=self.wall.Tmin, maxValue=self.wall.Tmax, style=wx.SL_VALUE_LABEL | wx.SL_VERTICAL | wx.SL_LEFT | wx.SL_INVERSE, name="Tint")
+        self.slider_Tint=wx.Slider(self.panel_fig_sliders,value=self.wall.Tint,minValue=self.wall.Tmin, maxValue=self.wall.Tmax, style=wx.SL_VALUE_LABEL | wx.SL_VERTICAL | wx.SL_INVERSE| wx.SL_AUTOTICKS, name="Tint")
         self.panelfig = PanelAnimatedFigure(self.panel_fig_sliders, self.wall.figure)
-        self.slider_Tout=wx.Slider(self.panel_fig_sliders,value=self.wall.Tout,minValue=self.wall.Tmin, maxValue=self.wall.Tmax, style=wx.SL_VALUE_LABEL | wx.SL_VERTICAL | wx.SL_LEFT | wx.SL_INVERSE, name="Tout")
+        self.slider_Tout=wx.Slider(self.panel_fig_sliders,value=self.wall.Tout,minValue=self.wall.Tmin, maxValue=self.wall.Tmax, style=wx.SL_VALUE_LABEL | wx.SL_VERTICAL | wx.SL_LEFT | wx.SL_INVERSE| wx.SL_AUTOTICKS, name="Tout")
 
         self.panel_info=PanelWallInfo(self.panel_fig_sliders)
         self.panel_info.update_info(self.wall)
@@ -395,9 +463,9 @@ class MainFrame(wx.Frame):
         sizer_h_fig_sliders.AddGrowableCol(3, proportion=1)
 
         # add content to the sizer
-        sizer_h_fig_sliders.Add(wx.StaticText(self.panel_fig_sliders,label="Tint (°C)"), 0,0)
-        sizer_h_fig_sliders.Add(wx.StaticText(self.panel_fig_sliders,label=""), 0,0)
-        sizer_h_fig_sliders.Add(wx.StaticText(self.panel_fig_sliders,label="Tout (°C)"), 0,0)
+        sizer_h_fig_sliders.Add(wx.StaticText(self.panel_fig_sliders,label="Tint (°C)"),1, wx.ALIGN_CENTER_HORIZONTAL)
+        sizer_h_fig_sliders.Add(wx.StaticText(self.panel_fig_sliders,label="Temperature in the wall") ,1, wx.ALIGN_CENTER_HORIZONTAL)
+        sizer_h_fig_sliders.Add(wx.StaticText(self.panel_fig_sliders,label="Text (°C)"),1, wx.ALIGN_CENTER_HORIZONTAL)
         sizer_h_fig_sliders.Add(wx.StaticText(self.panel_fig_sliders,label="Info"), 0,0)
         sizer_h_fig_sliders.Add(self.slider_Tint, 0,wx.EXPAND)
         sizer_h_fig_sliders.Add(self.panelfig, 1,wx.EXPAND)
@@ -446,10 +514,12 @@ class MainFrame(wx.Frame):
         self.run_sim=not(self.run_sim)
         if self.run_sim:
             self.timer.Start(30)
-            self.button_run.SetLabel("Pause")
+            self.panel_menu.button_run.SetLabel("Pause")
+            self.panel_menu.button_adv.Disable()
         else:
             self.timer.Stop()
-            self.button_run.SetLabel("Run")
+            self.panel_menu.button_run.SetLabel("Run")
+            self.panel_menu.button_adv.Enable()
 
 
     def on_receive_layers(self, event):
@@ -466,19 +536,6 @@ class MainFrame(wx.Frame):
         self.wall.remesh()
         self.redraw()
 
-#    def on_press_get_params(self, event):
-#        dt = self.panel_params.input_dt.GetValue()
-#        Tint= self.panel_params.input_int_temp.GetValue()
-#        Tout= self.panel_params.input_out_temp.GetValue()
-#
-#        self.wall.set_inside_temp(Tint)
-#        self.wall.set_outside_temp(Tout)
-#
-#        if dt<1e-8:
-#            print("Entered dt too close to zero or negative.")
-#        elif abs(dt-self.wall.dt)/dt > 0.001:
-#            self.wall.set_time_step(dt)
-#        self.redraw()
 
     def on_slide_Tint(self,event):
         Tint= self.slider_Tint.GetValue()
