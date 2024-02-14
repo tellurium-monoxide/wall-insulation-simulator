@@ -32,6 +32,7 @@ class PanelAnimatedFigure(wx.Panel):
         self.sizer = wx.BoxSizer(wx.HORIZONTAL)
         self.sizer.Add(self.canvas, 1, wx.ALL | wx.EXPAND)
         self.SetSizer(self.sizer)
+        self.Disable()
         self.Fit()
     def LoadFigure(self,figure):
 #        old=self.canvas
@@ -405,7 +406,7 @@ class MainFrame(wx.Frame):
         sizer_h_fig_sliders.Add(self.panel_info, 1, wx.EXPAND)
         self.panel_fig_sliders.SetSizer(sizer_h_fig_sliders)
 #        sizer_h_fig_sliders.SetSizeHints(self.panel_fig_sliders)
-        self.panelfig.Disable()
+
 
         self.sizer_v.Add(self.panel_fig_sliders, 1, wx.ALL | wx.EXPAND, 5)
 
