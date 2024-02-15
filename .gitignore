@@ -1,6 +1,6 @@
 *__pycache__*
 pyinstaller/build
 pyinstaller/dist
-pyinstaller/app.spec
+*.spec
 .spyproject*
-env
+venv*
