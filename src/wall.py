@@ -91,6 +91,7 @@ def register_scenario(name, scenario):
 
 
 register_scenario("Isolation intérieur laine de bois", WallScenario([(0.15, "Laine de bois"), (0.4, "Béton")]))
+register_scenario("Isolation intérieur laine de bois + BA13", WallScenario([(0.013, "BA13"),(0.15, "Laine de bois"), (0.4, "Béton")]))
 
 
 
@@ -156,6 +157,12 @@ class Wall:
 
             self.wall_length+=layer.e
             self.layers[i]=layer
+        self.time_to_statio=0
+        self.steps_to_statio=0
+        self.limiter_ratio=5
+        if len(self.layers)>0:
+            self.time_to_statio=max([layer.e**2/layer.mat.D for layer in self.layers])
+            self.steps_to_statio = self.time_to_statio/self.dt
 
 
     def add_layer(self, layer):

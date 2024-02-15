@@ -1,13 +1,14 @@
 import wx
 from wx.lib.masked import NumCtrl
-#import wx.lib.scrolledpanel
+import wx.lib.scrolledpanel as scrolled
 import matplotlib.backends.backend_wxagg
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg
 #from matplotlib.backends.backend_wx import NavigationToolbar2Wx
-
-
+from threading import Thread
+import time
 from wall import Wall, Layer, Material, DefaultMaterials, DefaultScenarios
 
+from localizer.localizer import Localizer
 
 myEVT_NEW_LAYERS = wx.NewEventType()
 EVT_NEW_LAYERS = wx.PyEventBinder(myEVT_NEW_LAYERS, 1)
@@ -23,75 +24,43 @@ class EventNewLayers(wx.PyCommandEvent):
     def GetLayers(self):
         return self.layers
 
-class Localizer:
-    
-    def __init__(self):
-        self.langs=["en","fr"]
-        self.lang="en"
-        
-        self.texts={}
-        for lang in self.langs:
-            self.texts[lang]={}
-        self.texts["en"]["run_button"]="Start"
-        self.texts["fr"]["run_button"]="Démarrer"
-        
-        self.texts["en"]["run_button_pause"]="Stop"
-        self.texts["fr"]["run_button_pause"]="Arrêter"
-        
-        self.texts["en"]["run_button_tooltip"]="Start simulating the diffusion of heat in the wall."
-        self.texts["fr"]["run_button_tooltip"]="Démarre la simulation de diffusion de la température dans le mur."
-        
-        self.links={}
-    def get_text(self, text_id):
-        if text_id in self.texts[self.lang]:
-            return self.texts[self.lang][text_id]
-        else:
-            return "missing text"
-    def link(self,setter, text_id, link_name):
-        
-        setter(self.get_text(text_id))
-        self.links[link_name]=(setter,text_id)
-        
-    def set_lang(self,lang):
-        self.lang=lang
-        for key, link in self.links.items():
-            setter,text_id=link
-            setter(self.get_text(text_id))
-            print(text_id)
+
     
     
 
 class PanelAnimatedFigure(wx.Panel):
-    def __init__(self, parent, figure):
+    def __init__(self, parent, figure, min_size=(640,400)):
         wx.Panel.__init__(self, parent)
         self.parent=parent
-        self.fixed_min_size=(640,400)
+        self.fixed_min_size=min_size
         self.canvas = FigureCanvasWxAgg(self, -1, figure)
-        self.canvas.draw_idle()
         self.canvas.SetMinSize(self.fixed_min_size)
-        self.sizer = wx.BoxSizer(wx.HORIZONTAL)
-        self.sizer.Add(self.canvas, 1, wx.ALL | wx.EXPAND, 0)
-        self.SetSizer(self.sizer)
+        self.canvas.draw_idle()
         
-        self.Disable()
+        self.sizer = wx.BoxSizer(wx.VERTICAL)
+
+        self.sizer.Add(self.canvas, 1, wx.BOTTOM|wx.EXPAND, 0)
+        self.SetSizer(self.sizer)
+
         self.Fit()
+
+        
     def LoadFigure(self,figure):
         self.Freeze()
+        self.Disable()
         self.canvas.Destroy()
-        self.sizer.Destroy()
         self.canvas = FigureCanvasWxAgg(self, -1, figure)
-        self.canvas.draw_idle()
         self.canvas.SetMinSize(self.fixed_min_size)
-        self.sizer = wx.BoxSizer(wx.HORIZONTAL)
-        self.sizer.Add(self.canvas, 1, wx.ALL | wx.EXPAND,0)
+        self.canvas.draw_idle()
+        self.Enable()
+        self.sizer = wx.BoxSizer(wx.VERTICAL)
+        self.sizer.Add(self.canvas, 1, wx.BOTTOM|wx.EXPAND,0)
         self.SetSizer(self.sizer)
-        # ~ self.sizer.SetSizeHints(self.parent)
-
         self.Thaw()
 
 
 class PanelNumericInput(wx.Panel):
-    def __init__(self, parent, name="", def_val=1,integerWidth = 6,fractionWidth = 3, unit=""):
+    def __init__(self, parent, name="", def_val=1,integerWidth = 6,fractionWidth = 3, unit="", ):
         wx.Panel.__init__(self, parent)
 
         self.def_val=def_val
@@ -159,16 +128,21 @@ class PanelLayer(wx.Panel):
         if iselect>0:
             mat=DefaultMaterials[mat_name]
             self.input_layer_mat_lambda.SetValue(mat.la)
-            self.input_layer_mat_lambda.Disable()
+            
             self.input_layer_mat_rho.SetValue(mat.rho)
-            self.input_layer_mat_rho.Disable()
+            
             self.input_layer_mat_cp.SetValue(mat.Cp)
-            self.input_layer_mat_cp.Disable()
+            self.disable_mat_input()
         else:
             self.input_layer_mat_lambda.Enable()
             self.input_layer_mat_rho.Enable()
             self.input_layer_mat_cp.Enable()
 
+
+    def disable_mat_input(self):
+        self.input_layer_mat_lambda.Disable()
+        self.input_layer_mat_rho.Disable()
+        self.input_layer_mat_cp.Disable()
 
     def get_layer(self):
         la=self.input_layer_mat_lambda.GetValue()
@@ -190,6 +164,8 @@ class PanelLayer(wx.Panel):
             mat_id=self.list_choices.index(layer.mat.name)
         except ValueError:
             mat_id=0
+        if mat_id>0:
+            self.disable_mat_input()
         self.typechoice.SetSelection(mat_id)
         self.input_layer_width.SetValue(layer.e)
         self.input_layer_mat_lambda.SetValue(layer.mat.la)
@@ -200,7 +176,7 @@ class PanelLayer(wx.Panel):
 class PanelLayerList(wx.Panel):
     def __init__(self, parent):
         wx.Panel.__init__(self, parent)
-        # ~ wx.lib.scrolledpanel.ScrolledPanel.__init__(self, parent,size=(wx.DisplaySize()[0],200))
+        # ~ scrolled.ScrolledPanel.__init__(self, parent,size=(wx.DisplaySize()[0],200))
         # ~ self.SetupScrolling()
         self.parent=parent
 
@@ -254,21 +230,39 @@ class PanelLayerList(wx.Panel):
         
 
 class PanelLayerMgr(wx.Panel):
-    def __init__(self, parent):
-        wx.Panel.__init__(self, parent)
+    def __init__(self, parent, localizer=Localizer()):
+        wx.Panel.__init__(self, parent, style=wx.BORDER_STATIC)
+        self.localizer=localizer
         self.sizer_v = wx.BoxSizer(wx.VERTICAL)
 
         self.sizer_h = wx.BoxSizer(wx.HORIZONTAL)
 
         self.button_edit= wx.Button(self, label="Edit layers")
+        self.localizer.link(self.button_edit.SetLabel, "button_edit", "button_edit")
+        
         self.button_add= wx.Button(self, label='Add layer')
+        self.localizer.link(self.button_add.SetLabel, "button_add", "button_add")
+        
         self.button_remove= wx.Button(self, label='Remove layer')
+        self.localizer.link(self.button_remove.SetLabel, "button_remove", "button_remove")
+        
         self.button_load= wx.Button(self, label='Load')
+        self.localizer.link(self.button_load.SetLabel, "button_load", "button_load")
+        self.localizer.link(self.button_load.SetToolTip, "button_load_tooltip", "button_load_tooltip")
+        
         
 
         self.list_scenarios=["custom"]+list(DefaultScenarios.keys())
         self.choice_scenario= wx.Choice(self,choices=self.list_scenarios)
         self.choice_scenario.SetSelection(0)
+        
+        self.button_save= wx.Button(self, label='Load')
+        self.localizer.link(self.button_save.SetLabel, "button_save", "button_save")
+        self.localizer.link(self.button_save.SetToolTip, "button_save_tooltip", "button_save_tooltip")
+        
+        self.ctrl_save_name= wx.TextCtrl(self)
+        # ~ self.localizer.link(self.ctrl_save_name.SetLabel, "button_save", "button_save")
+        # ~ self.localizer.link(self.ctrl_save_name.SetToolTip, "button_save_tooltip", "button_save_tooltip")
 
         self.sizer_h.Add(self.button_edit, 0, wx.ALL, 5)
         self.sizer_h.Add(self.button_add, 0, wx.ALL, 5)
@@ -276,6 +270,8 @@ class PanelLayerMgr(wx.Panel):
         self.sizer_h.AddSpacer(20)
         self.sizer_h.Add(self.button_load, 0, wx.ALL, 5)
         self.sizer_h.Add(self.choice_scenario, 0, wx.ALL, 5)
+        self.sizer_h.Add(self.button_save, 0, wx.ALL, 5)
+        self.sizer_h.Add(self.ctrl_save_name, 0, wx.ALL, 5)
 
 
 
@@ -296,6 +292,8 @@ class PanelLayerMgr(wx.Panel):
 
 
         self.SetSizer(self.sizer_v)
+        
+        
         self.Fit()
 
         self.is_frozen=False
@@ -307,15 +305,16 @@ class PanelLayerMgr(wx.Panel):
     def toggle_edit(self, set_custom=True):
         self.is_frozen=not(self.is_frozen)
         if not(self.is_frozen): # set it to unfrozen state
-            self.button_edit.SetLabel("Confirm")
+            self.localizer.link(self.button_edit.SetLabel, "button_edit_confirm", "button_edit")
             self.panel_layer_list.Enable()
             self.button_add.Enable()
-            self.button_remove.Enable()
+            if len(self.panel_layer_list.layer_panels)>1:
+                self.button_remove.Enable()
             if set_custom:
                 self.choice_scenario.SetSelection(0)
             # ~ self.panel_layers.Thaw()
         else:# set to frozen state and send confirmed layers above
-            self.button_edit.SetLabel("Edit layers")
+            self.localizer.link(self.button_edit.SetLabel, "button_edit", "button_edit")
             # ~ self.panel_layers.Freeze()
             self.panel_layer_list.Disable()
             self.button_add.Disable()
@@ -331,8 +330,12 @@ class PanelLayerMgr(wx.Panel):
         
     def on_press_add_layer(self, event):
         self.panel_layer_list.add_layer()
+        self.button_remove.Enable()
+        
     def on_press_remove_layer(self, event):
         self.panel_layer_list.remove_layer()
+        if len(self.panel_layer_list.layer_panels)==1:
+            self.button_remove.Disable()
         
     def on_press_load_scenario(self,event):
         sel=self.choice_scenario.GetSelection()
@@ -345,7 +348,8 @@ class PanelLayerMgr(wx.Panel):
             self.send_layers()
         if not(self.is_frozen):
                 self.toggle_edit(set_custom=False)
-
+        if len(self.panel_layer_list.layer_panels)==1:
+            self.button_remove.Disable()
 
 class PanelTempControl(wx.Panel):
     def __init__(self, parent, wall):
@@ -372,9 +376,9 @@ class PanelTempControl(wx.Panel):
 
 
 class PanelWallInfo(wx.Panel):
-    def __init__(self, parent):
+    def __init__(self, parent, localizer=Localizer()):
         wx.Panel.__init__(self, parent)
-
+        self.localizer=localizer
         self.sizer_v = wx.BoxSizer(wx.VERTICAL)
 
         self.info_time=wx.StaticText(self,label="")
@@ -390,11 +394,18 @@ class PanelWallInfo(wx.Panel):
         self.sizer_v.Add(self.info_phi, 0, wx.LEFT, 3)
         self.info_phi2=wx.StaticText(self,label="")
         self.sizer_v.Add(self.info_phi2, 0, wx.LEFT, 3)
+        
+        self.info_Nx=wx.StaticText(self,label="")
+        self.sizer_v.Add(self.info_Nx, 0, wx.LEFT, 3)
+        self.info_limit=wx.StaticText(self,label="")
+        self.sizer_v.Add(self.info_limit, 0, wx.LEFT, 3)
 
         self.SetSizer(self.sizer_v)
+        self.SetMinSize((350,-1))
         self.Fit()
 
     def update_info(self,wall):
+        self.Freeze()
         self.info_time.SetLabel("Time = %s" % wall.get_formatted_time())
         self.info_dt.SetLabel("Time step = %s" % wall.get_formatted_time_step())
         Rth=sum([l.Rth for l in wall.layers])
@@ -403,13 +414,18 @@ class PanelWallInfo(wx.Panel):
         self.info_phi.SetLabel("Thermal flux from interior to wall = %g W/m²" % phi_int_to_wall)
         phi_int_to_out = (wall.Tout-wall.Tint) / Rth
         self.info_phi2.SetLabel("Thermal flux from interior to out  = %g W/m²" % phi_int_to_out)
+        Nx= sum([layer.Npoints for layer in wall.layers])
+        self.info_Nx.SetLabel("Nx= %d" % Nx)
+        limiter=(wall.steps_to_statio/wall.limiter_ratio)
+        self.info_limit.SetLabel("limiter = %g" % limiter)
         self.Fit()
+        self.Thaw()
 
 class MainPanel(wx.Panel):
-    def __init__(self,parent):
+    def __init__(self,parent,localizer=Localizer()):
         wx.Panel.__init__(self,parent)
-
-
+        self.parent=parent
+        self.localizer=localizer
         wall=Wall()
 
         dt=1
@@ -430,18 +446,17 @@ class MainPanel(wx.Panel):
 
         self.wall=wall
 
-
+        # ~ parent.status_bar.SetStatusText("a")
 
 
         self.run_sim=False
 
 
 
-        self.localizer=Localizer()
-
         # main vertical sizer
         self.sizer_v = wx.BoxSizer(wx.VERTICAL)
 
+        space=5
 # =============================================================================
 # panel with main actions
 # =============================================================================
@@ -453,24 +468,27 @@ class MainPanel(wx.Panel):
         self.localizer.link(self.panel_menu.button_run.SetLabel, "run_button", "run_button")
         self.localizer.link(self.panel_menu.button_run.SetToolTip, "run_button_tooltip", "run_button_tooltip")
         self.panel_menu.button_run.Bind(wx.EVT_BUTTON, self.on_press_run)
-        sizer_h.Add(self.panel_menu.button_run, 0, wx.ALL, 2)
+        sizer_h.Add(self.panel_menu.button_run, 0, wx.ALL, space)
         
         self.panel_menu.button_adv = wx.Button(self.panel_menu, label='Advance one timestep')
-        self.panel_menu.button_adv.Bind(wx.EVT_BUTTON, self.update_sim)
-        sizer_h.Add(self.panel_menu.button_adv, 0, wx.ALL, 2)
+        self.localizer.link(self.panel_menu.button_adv.SetLabel, "button_advance", "button_advance")
+        self.panel_menu.button_adv.Bind(wx.EVT_BUTTON, self.on_press_advance)
+        sizer_h.Add(self.panel_menu.button_adv, 0, wx.ALL, space)
 
         self.panel_menu.button_statio = wx.Button(self.panel_menu, label='Set statio')
+        self.localizer.link(self.panel_menu.button_statio.SetLabel, "button_statio", "button_statio")
+        self.localizer.link(self.panel_menu.button_statio.SetToolTip, "button_statio_tooltip", "button_statio_tooltip")
         self.panel_menu.button_statio.Bind(wx.EVT_BUTTON, self.on_press_statio)
-        sizer_h.Add(self.panel_menu.button_statio, 0, wx.ALL, 2)
+        sizer_h.Add(self.panel_menu.button_statio, 0, wx.ALL, space)
 
         self.panel_menu.button_reset = wx.Button(self.panel_menu, label='Reset')
         self.panel_menu.button_reset.Bind(wx.EVT_BUTTON, self.on_press_reset)
-        sizer_h.Add(self.panel_menu.button_reset, 0, wx.ALL, 2)
+        sizer_h.Add(self.panel_menu.button_reset, 0, wx.ALL, space)
 
-        self.panel_menu.lang_choice=wx.Choice(self.panel_menu, choices=[s.upper() for s in self.localizer.langs])
-        self.panel_menu.lang_choice.SetSelection(0)
-        self.panel_menu.lang_choice.Bind(wx.EVT_CHOICE, self.on_lang_choice)
-        sizer_h.Add(self.panel_menu.lang_choice, 0, wx.ALL, 2)
+        # ~ self.panel_menu.lang_choice=wx.Choice(self.panel_menu, choices=[s.upper() for s in self.localizer.langs])
+        # ~ self.panel_menu.lang_choice.SetSelection(0)
+        # ~ self.panel_menu.lang_choice.Bind(wx.EVT_CHOICE, self.on_lang_choice)
+        # ~ sizer_h.Add(self.panel_menu.lang_choice, 0, wx.ALL, space)
         
         self.panel_menu.SetSizer(sizer_h)
 
@@ -478,7 +496,7 @@ class MainPanel(wx.Panel):
 # =============================================================================
 # panel to manage layer
 # =============================================================================
-        self.layermgr=PanelLayerMgr(self)
+        self.layermgr=PanelLayerMgr(self, localizer=self.localizer)
         self.sizer_v.Add(self.layermgr,0, wx.ALL | wx.ALL,2)
 # =============================================================================
 # panel to show animated figure
@@ -491,7 +509,7 @@ class MainPanel(wx.Panel):
         self.panelfig = PanelAnimatedFigure(self.panel_fig_sliders, self.wall.figure)
         self.slider_Tout=wx.Slider(self.panel_fig_sliders,value=self.wall.Tout,minValue=self.wall.Tmin, maxValue=self.wall.Tmax, style=wx.SL_VALUE_LABEL | wx.SL_VERTICAL | wx.SL_LEFT | wx.SL_INVERSE| wx.SL_AUTOTICKS, name="Tout")
 
-        self.panel_info=PanelWallInfo(self.panel_fig_sliders)
+        self.panel_info=PanelWallInfo(self.panel_fig_sliders, self.localizer)
         self.panel_info.update_info(self.wall)
 
         # create a FlexGridSizer to position the figure, sliders...
@@ -529,28 +547,45 @@ class MainPanel(wx.Panel):
 # bindings
 # =============================================================================
         # manage main update
-        self.timer = wx.Timer(self)
-        self.Bind(wx.EVT_TIMER, self.update_sim, self.timer)
+        self.updates=0
+        self.time_last_redraw=time.process_time()
+        self.this_run_time=0
+        self.this_run_updates=0
+        self.timer_update_sim = wx.Timer(self)
+        self.timer_update_redraw= wx.Timer(self)
+        # ~ self.Bind(wx.EVT_TIMER, self.on_timer_update, self.timer_update_sim)
+        self.Bind(wx.EVT_TIMER, self.on_timer_redraw, self.timer_update_redraw)
+        
+        
 
         self.Bind(EVT_NEW_LAYERS, self.on_receive_layers)
 
         self.slider_Tint.Bind(wx.EVT_SLIDER, self.on_slide_Tint)
         self.slider_Tout.Bind(wx.EVT_SLIDER, self.on_slide_Tout)
+        self.Bind(wx.EVT_CLOSE , self.on_close)
 
 
-
-
+    def on_close(self,event):
+        if self.run_sim:
+            self.timer.Stop()
+            self.run_sim=False
+        event.skip()
 
     def on_press_run(self, event):
         self.run_sim=not(self.run_sim)
         if self.run_sim:
-            self.timer.Start(30)
+            self.update_in_thread()
+            self.timer_update_sim.Start(1)
+            self.timer_update_redraw.Start(50)
             self.localizer.link(self.panel_menu.button_run.SetLabel, "run_button_pause", "run_button")
             self.panel_menu.button_adv.Disable()
         else:
-            self.timer.Stop()
+            self.timer_update_sim.Stop()
+            self.timer_update_redraw.Stop()
             self.localizer.link(self.panel_menu.button_run.SetLabel, "run_button", "run_button")
             self.panel_menu.button_adv.Enable()
+            self.this_run_time=0
+            self.this_run_updates=0
 
 
     def on_receive_layers(self, event):
@@ -573,37 +608,111 @@ class MainPanel(wx.Panel):
         self.wall.set_inside_temp(Tint)
         if not(self.run_sim):
             self.redraw()
+
     def on_slide_Tout(self,event):
         Tout= self.slider_Tout.GetValue()
         self.wall.set_outside_temp(Tout)
         if not(self.run_sim):
             self.redraw()
             
-    def on_lang_choice(self,event):
-        sel=self.panel_menu.lang_choice.GetSelection()
-        lang=self.localizer.langs[sel]
-        self.localizer.set_lang(lang)
+    # ~ def on_lang_choice(self,event):
+        # ~ sel=self.panel_menu.lang_choice.GetSelection()
+        # ~ lang=self.localizer.langs[sel]
+        # ~ self.localizer.set_lang(lang)
+        # ~ self.Layout()
 
 
-
-    def update_sim(self,event):
-
-        self.wall.advance_time()
+    def on_timer_update(self,event):
+        self.update_sim()
+        self.updates+=1
+    def on_press_advance(self,event):
+        self.update_sim()
         self.redraw()
+        
+    def on_timer_redraw(self,event):
+        if self.thread.is_alive():
+            self.thread.join()
+            
+        self.redraw()
+        # ~ print("updates since last redraw ",self.updates)
+        
+        time_new_redraw=time.process_time()
+        self.time_since_redraw=time_new_redraw-self.time_last_redraw
+        # ~ print("updates since last redraw ",self.time_since_redraw * 1000, 'ms')
+        
+        self.this_run_time+=self.time_since_redraw
+        self.this_run_updates+=self.updates
+        # ~ print("updates per seconds :",self.this_run_updates/self.this_run_time)
+        # ~ print("progression to statio :",self.wall.time_to_statio/(self.wall.time+self.wall.dt))
+        
+        self.time_last_redraw=time.process_time()
+        
+        self.updates=0
+        
+        self.update_in_thread()
+        
+    def update_in_thread(self):
+        self.thread = Thread(target=self.update_sim)
+        self.thread.start()
+        self.updates+=1
+        
+    def update_sim(self):
+        
+        self.wall.advance_time()
+        
+        if self.run_sim:
+            time_new_redraw=time.process_time()
+            self.time_since_redraw=time_new_redraw-self.time_last_redraw
+            
+            if self.time_since_redraw*1000 < self.timer_update_redraw.GetInterval() and not(self.time_since_redraw > 0 and self.updates/self.time_since_redraw > self.wall.steps_to_statio/self.wall.limiter_ratio):
+                wx.CallAfter(self.update_in_thread)
+        
+
 
 
     def redraw(self):
         self.panel_info.update_info(self.wall)
         self.wall.draw()
         self.panelfig.LoadFigure(self.wall.figure)
+        
+        
 
 
 class MainFrame(wx.Frame):
     def __init__(self):
-        super().__init__(parent=None, title='wall-simulator',size=(1000, 1000))
+        super().__init__(parent=None, title='wall-simulator', style=wx.DEFAULT_FRAME_STYLE & ~(wx.RESIZE_BORDER))
         
-        self.main_panel=MainPanel(self)
-        self.CreateToolBar()
+        self.localizer=Localizer()
+        self.localizer.set_lang("fr")
+        menubar = wx.MenuBar()
+        menu_edit=wx.Menu()
+        menu_lang=wx.Menu()
+        
+        
+        actions={}
+        for lang in self.localizer.langs:
+            item=menu_lang.Append(-1, lang.upper(), '')
+            self.Bind(wx.EVT_MENU,  self.on_lang_change)
+            
+            
+        
+        # ~ menu_edit.AppendSubMenu(menu_lang, 'Lang')
+        
+        menubar.Append(menu_lang, 'Lang')
+        
+        self.SetMenuBar(menubar)
+        
+        
+        
+        self.main_panel=MainPanel(self, localizer=self.localizer)
+        
+        self.sizer_v = wx.BoxSizer(wx.VERTICAL)
+
+        self.sizer_v.Add(self.main_panel, 1, wx.EXPAND, 0)
+
+        
+        self.SetSizer(self.sizer_v)
+        self.sizer_v.SetSizeHints(self)
 # =============================================================================
 # show the frame
 # =============================================================================
@@ -612,6 +721,10 @@ class MainFrame(wx.Frame):
         # ~ self.SetPosition((w, h))
         self.Show()
         # ~ self.Maximize(True)
+
+    def on_lang_change(self,event):
+        self.localizer.set_lang(event.GetEventObject().FindItemById(event.GetId()).GetItemLabel().lower())
+        self.Layout()
 
 if __name__ == '__main__':
     app = wx.App()
