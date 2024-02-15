@@ -195,6 +195,8 @@ class Wall:
 
     def get_formatted_time(self):
         return format_time(self.time)
+    def get_formatted_time_step(self):
+        return format_time(self.dt)
 
 
     def draw(self):
