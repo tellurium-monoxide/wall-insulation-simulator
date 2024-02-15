@@ -11,8 +11,10 @@ Created on Mon Feb 12 08:39:27 2024
 import numpy as np
 
 
+import matplotlib
+matplotlib.use('WxAgg')
 
-
+import matplotlib.backends.backend_wxagg
 from matplotlib.figure import Figure
 
 

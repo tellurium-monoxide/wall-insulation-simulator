@@ -1,7 +1,8 @@
 import wx
 from wx.lib.masked import NumCtrl
 #import wx.lib.scrolledpanel
-from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
+import matplotlib.backends.backend_wxagg
+from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg
 #from matplotlib.backends.backend_wx import NavigationToolbar2Wx
 
 
@@ -27,7 +28,7 @@ class EventNewLayers(wx.PyCommandEvent):
 class PanelAnimatedFigure(wx.Panel):
     def __init__(self, parent, figure):
         wx.Panel.__init__(self, parent)
-        self.canvas = FigureCanvas(self, -1, figure)
+        self.canvas = FigureCanvasWxAgg(self, -1, figure)
         self.canvas.draw_idle()
         self.sizer = wx.BoxSizer(wx.HORIZONTAL)
         self.sizer.Add(self.canvas, 1, wx.ALL | wx.EXPAND)
@@ -39,7 +40,7 @@ class PanelAnimatedFigure(wx.Panel):
         self.Freeze()
 #        self.Disable()
         self.canvas.Destroy()
-        self.canvas = FigureCanvas(self, -1, figure)
+        self.canvas = FigureCanvasWxAgg(self, -1, figure)
         self.canvas.draw_idle()
         self.sizer = wx.BoxSizer(wx.HORIZONTAL)
         self.sizer.Add(self.canvas, 1, wx.EXPAND)
