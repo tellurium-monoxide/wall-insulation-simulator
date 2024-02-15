@@ -18,7 +18,6 @@ import matplotlib.backends.backend_wxagg
 from matplotlib.figure import Figure
 
 
-import scipy.optimize
 
 
 
@@ -255,7 +254,21 @@ class Wall:
         for i in range(1,len(Ts)-1):
             d[i]=(Ts[i]-Ts[i-1])/self.layers[i-1].Rth-(Ts[i+1]-Ts[i])/self.layers[i].Rth
         return d
-
+        
+    def stationnary_linear_system(self):
+        n=len(self.layers)+1
+        M=np.zeros((n,n))
+        d=np.zeros(n)
+        d[0]=self.Tint
+        d[-1]=self.Tout
+        M[0,0]=1
+        M[-1,-1]=1
+        for i in range(1,n-1):
+            M[i, i-1] = - 1/self.layers[i-1].Rth
+            M[i, i  ] = 1/self.layers[i].Rth + 1/self.layers[i-1].Rth
+            M[i, i+1] = -1/self.layers[i].Rth
+        
+        return M,d
 
     def compute_phi(self):
         phi=0
@@ -277,9 +290,8 @@ class Wall:
         Ts[0]=self.Tint
         Ts[-1]=self.Tout
 
-#        fun = lambda T : self.stationnary_equation(T,self.Rth)
-        sol=scipy.optimize.root(self.stationnary_equation, x0=Ts)
-        Ts=sol.x
+        M,d=self.stationnary_linear_system()
+        Ts=np.linalg.solve(M,d)
 
         for i in range(len(self.layers)):
             self.layers[i].Tmesh=(self.layers[i].xmesh-self.layers[i].xmesh[0]) / self.layers[i].e * (Ts[i+1]-Ts[i]) +Ts[i]
@@ -395,8 +407,9 @@ if __name__=="__main__":
     layer1=Layer(e=1, mat=mat1)
     layer2=Layer(e=2, mat=mat2)
     wall.add_layer(layer1)
+    wall.add_layer(layer2)
 
-    wall.change_layers([layer2])
+    # ~ wall.change_layers([layer2])
 
     wall.set_inside_temp(19)
     wall.set_outside_temp(10)
@@ -404,6 +417,6 @@ if __name__=="__main__":
 
 
     wall.solve_stationnary()
-    wall.draw()
+    # ~ wall.draw()
 
 

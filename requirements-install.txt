@@ -22,7 +22,6 @@ pylint==3.0.3
 pyparsing==3.1.1
 python-dateutil==2.8.2
 pywin32-ctypes==0.2.2
-scipy==1.12.0
 setuptools==69.1.0
 six==1.16.0
 tomlkit==0.12.3
