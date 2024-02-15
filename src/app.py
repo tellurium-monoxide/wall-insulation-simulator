@@ -60,9 +60,9 @@ class PanelAnimatedFigure(wx.Panel):
 
 
 class PanelNumericInput(wx.Panel):
-    def __init__(self, parent, name="", def_val=1,integerWidth = 6,fractionWidth = 3, unit="", ):
+    def __init__(self, parent, name="", def_val=1,integerWidth = 6,fractionWidth = 3, unit="", unit_scale=1):
         wx.Panel.__init__(self, parent)
-
+        self.unit_scale=unit_scale
         self.def_val=def_val
         self.label=wx.StaticText(self, label=name, style=wx.ALIGN_RIGHT)
         self.eq=wx.StaticText(self, label=" = ",)
@@ -80,11 +80,46 @@ class PanelNumericInput(wx.Panel):
         self.Fit()
 
     def GetValue(self):
-        return self.num_ctrl.GetValue()
+        return (self.num_ctrl.GetValue()/self.unit_scale)
     def SetValue(self, val):
-        self.num_ctrl.SetValue(val)
+        self.num_ctrl.SetValue(val*self.unit_scale)
 
 
+class PanelMaterialCreator(wx.Panel):
+    def __init__(self, parent, localizer=Localizer()):
+        wx.Panel.__init__(self, parent, style=wx.BORDER_STATIC)
+        self.localizer=localizer
+        self.sizer = wx.BoxSizer(wx.VERTICAL)
+
+
+        
+        self.button_create= wx.Button(self)
+        self.localizer.link(self.button_create.SetLabel, "button_create_mat", "button_create_mat")
+        self.localizer.link(self.button_create.SetToolTip, "button_create_mat_tooltip", "button_create_mat_tooltip")
+        self.sizer.Add(self.button_create,0, wx.ALL | wx.EXPAND,2)
+        
+        self.ctrl_save_name= wx.TextCtrl(self)
+        self.sizer.Add(self.ctrl_save_name,0, wx.ALL | wx.EXPAND,2)
+
+
+
+        # ask for mat param 1: lambda
+        self.input_layer_mat_lambda=PanelNumericInput(self,name="\u03BB", unit="W/m/K")
+        self.sizer.Add(self.input_layer_mat_lambda)
+
+
+        # ask for mat param 2: rho
+        self.input_layer_mat_rho=PanelNumericInput(self,name="\u03C1",unit="kg/m3")
+        self.sizer.Add(self.input_layer_mat_rho)
+
+        # ask for mat param 3: Cp
+        self.input_layer_mat_cp=PanelNumericInput(self,name="Cp",unit="J/kg/K")
+        self.sizer.Add(self.input_layer_mat_cp)
+
+
+
+        self.SetSizer(self.sizer)
+        self.Fit()
 class PanelLayer(wx.Panel):
     def __init__(self, parent):
         wx.Panel.__init__(self, parent)
@@ -92,7 +127,7 @@ class PanelLayer(wx.Panel):
 
 
 
-        self.input_layer_width=PanelNumericInput(self,name="e", unit="m")
+        self.input_layer_width=PanelNumericInput(self,name="e", unit="mm", unit_scale=1000, fractionWidth = 0)
         self.sizer.Add(self.input_layer_width)
 
         self.list_choices=["custom"]+list(DefaultMaterials.keys())
@@ -496,8 +531,15 @@ class MainPanel(wx.Panel):
 # =============================================================================
 # panel to manage layer
 # =============================================================================
+        self.mat_creator=PanelMaterialCreator(self, localizer=self.localizer)
         self.layermgr=PanelLayerMgr(self, localizer=self.localizer)
-        self.sizer_v.Add(self.layermgr,0, wx.ALL | wx.ALL,2)
+        self.layermgr.panel_layer_list.load_layers(self.wall.layers)
+        
+        sizer_h=wx.BoxSizer(wx.HORIZONTAL)
+        sizer_h.Add(self.mat_creator,0, wx.ALL | wx.EXPAND,2)
+        sizer_h.Add(self.layermgr,0, wx.ALL,2)
+        
+        self.sizer_v.Add(sizer_h,0, wx.ALL | wx.ALL,2)
 # =============================================================================
 # panel to show animated figure
 # =============================================================================
@@ -551,9 +593,8 @@ class MainPanel(wx.Panel):
         self.time_last_redraw=time.process_time()
         self.this_run_time=0
         self.this_run_updates=0
-        self.timer_update_sim = wx.Timer(self)
+        
         self.timer_update_redraw= wx.Timer(self)
-        # ~ self.Bind(wx.EVT_TIMER, self.on_timer_update, self.timer_update_sim)
         self.Bind(wx.EVT_TIMER, self.on_timer_redraw, self.timer_update_redraw)
         
         
@@ -567,7 +608,7 @@ class MainPanel(wx.Panel):
 
     def on_close(self,event):
         if self.run_sim:
-            self.timer.Stop()
+            self.timer_update_redraw.Stop()
             self.run_sim=False
         event.skip()
 
@@ -575,12 +616,10 @@ class MainPanel(wx.Panel):
         self.run_sim=not(self.run_sim)
         if self.run_sim:
             self.update_in_thread()
-            self.timer_update_sim.Start(1)
-            self.timer_update_redraw.Start(50)
+            self.timer_update_redraw.Start(30)
             self.localizer.link(self.panel_menu.button_run.SetLabel, "run_button_pause", "run_button")
             self.panel_menu.button_adv.Disable()
         else:
-            self.timer_update_sim.Stop()
             self.timer_update_redraw.Stop()
             self.localizer.link(self.panel_menu.button_run.SetLabel, "run_button", "run_button")
             self.panel_menu.button_adv.Enable()
