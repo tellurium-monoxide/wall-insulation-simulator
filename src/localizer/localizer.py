@@ -87,3 +87,9 @@ class Localizer:
             setter,text_id=link
             setter(self.get_text(text_id))
             # ~ print(text_id)
+    @staticmethod
+    def get_localizer(localizer=None):
+            if localizer==None:
+                return Localizer()
+            else:
+                return localizer
