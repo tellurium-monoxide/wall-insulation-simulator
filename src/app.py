@@ -60,17 +60,85 @@ class PanelAnimatedFigure(wx.Panel):
 
 
 class ValidatorNumericInputOnly(wx.Validator):
-    def __init__(self):
-        wx.Validator()
+    def __init__(self, fraction_width=3):
+        wx.Validator.__init__(self)
+        self.Bind(wx.EVT_CHAR, self.filter_keys)
+        self.allowedUnicodeKeys=[8, 46, 49, 50, 51, 52, 53, 54, 55, 56, 57]
+        self.allowedkeyCodes=[314, 316]
+        self.fraction_width=fraction_width
+#
+
+
+    def filter_keys(self,event):
+        key=event.GetUnicodeKey()
+        keyCode=event.GetKeyCode()
+        textCtrl = self.GetWindow()
+        entered=textCtrl.GetValue()
+#        split=entered.split()
+        print(entered)
+        willRepeatPeriod= (key==46 and ('.' in entered))
+#        print(key)
+#        print(keyCode)
+        if not(willRepeatPeriod) and( key in self.allowedUnicodeKeys or keyCode in self.allowedkeyCodes ):
+            event.Skip()
+
+
+
+    def Clone(self):
+         """ Standard cloner.
+
+             Note that every validator must implement the Clone() method.
+         """
+         return ValidatorNumericInputOnly()
+
+
+    def Validate(self, win):
+         """ Validate the contents of the given text control.
+         """
+         textCtrl = self.GetWindow()
+         text = textCtrl.GetValue()
+
+         if len(text) == 0:
+             wx.MessageBox("The numeric input must have something entered", "Error")
+             textCtrl.SetBackgroundColour("pink")
+             textCtrl.SetFocus()
+             textCtrl.Refresh()
+             return False
+         else:
+             textCtrl.SetBackgroundColour(
+                 wx.SystemSettings_GetColour(wx.SYS_COLOUR_WINDOW))
+             textCtrl.Refresh()
+             return True
+
+
+    def TransferToWindow(self):
+         """ Transfer data from validator to window.
+
+             The default implementation returns False, indicating that an error
+             occurred.  We simply return True, as we don't do any data transfer.
+         """
+         return True # Prevent wxDialog from complaining.
+
+
+    def TransferFromWindow(self):
+         """ Transfer data from window to validator.
+
+             The default implementation returns False, indicating that an error
+             occurred.  We simply return True, as we don't do any data transfer.
+         """
+         return True # Prevent wxDialog from complaining.
+
 
 class PanelNumericInput(wx.Panel):
     def __init__(self, parent, name="", def_val=1,integerWidth = 6,fractionWidth = 3, unit="", unit_scale=1):
         wx.Panel.__init__(self, parent)
         self.unit_scale=unit_scale
         self.def_val=def_val
+        self.fractionWidth=fractionWidth
         self.label=wx.StaticText(self, label=name, style=wx.ALIGN_RIGHT)
         self.eq=wx.StaticText(self, label=" = ",)
-        self.num_ctrl = NumCtrl(self, value=def_val, integerWidth = integerWidth,fractionWidth = fractionWidth,allowNone = False,allowNegative = False,)
+
+        self.num_ctrl = wx.TextCtrl(self, value=str(def_val), validator=ValidatorNumericInputOnly())
         self.unit=wx.StaticText(self, label=unit)
 
         self.sizer_h=wx.BoxSizer(wx.HORIZONTAL)
@@ -84,9 +152,9 @@ class PanelNumericInput(wx.Panel):
         self.Fit()
 
     def GetValue(self):
-        return (self.num_ctrl.GetValue()/self.unit_scale)
+        return (float(self.num_ctrl.GetValue())/self.unit_scale)
     def SetValue(self, val):
-        self.num_ctrl.SetValue(val*self.unit_scale)
+        self.num_ctrl.SetValue(str(val*self.unit_scale))
 
 
 class PanelMaterialCreator(wx.Panel):
@@ -118,7 +186,7 @@ class PanelMaterialCreator(wx.Panel):
         self.localizer.link(self.button_create.SetLabel, "button_create_mat", "button_create_mat")
         self.localizer.link(self.button_create.SetToolTip, "button_create_mat_tooltip", "button_create_mat_tooltip")
 
-        self.ctrl_save_name= wx.TextCtrl(self)
+        self.ctrl_save_name= wx.TextCtrl(self, validator=ValidatorNumericInputOnly())
         sizer_h2.Add(self.ctrl_save_name,1, wx.ALL | wx.EXPAND,5)
         sizer_h2.Add(self.button_create,0, wx.ALL,5)
 
