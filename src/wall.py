@@ -75,16 +75,16 @@ class Layer:
         self.mat=mat
 
         self.Rth = e / mat.la
-        
-        
+
+
 class WallScenario:
     def __init__(self, layers):
         self.layers=[]
         for named_layer in layers:
             layer=Layer (named_layer[0], DefaultMaterials[named_layer[1]])
             self.layers.append(layer)
-            
-            
+
+
 DefaultScenarios={}
 def register_scenario(name, scenario):
     DefaultScenarios[name]=scenario
@@ -214,7 +214,7 @@ class Wall:
         self.ax.margins(0)
 
         wl=self.wall_length
-        hspace=wl/3
+        hspace=wl/4
         self.ax.set_xlim([-hspace,wl+hspace])
         vspace=1
         self.ax.set_ylim([self.Tmin-vspace, self.Tmax+vspace])
@@ -263,7 +263,7 @@ class Wall:
         for i in range(1,len(Ts)-1):
             d[i]=(Ts[i]-Ts[i-1])/self.layers[i-1].Rth-(Ts[i+1]-Ts[i])/self.layers[i].Rth
         return d
-        
+
     def stationnary_linear_system(self):
         n=len(self.layers)+1
         M=np.zeros((n,n))
@@ -276,7 +276,7 @@ class Wall:
             M[i, i-1] = - 1/self.layers[i-1].Rth
             M[i, i  ] = 1/self.layers[i].Rth + 1/self.layers[i-1].Rth
             M[i, i+1] = -1/self.layers[i].Rth
-        
+
         return M,d
 
     def compute_phi(self):

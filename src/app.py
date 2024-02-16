@@ -25,8 +25,8 @@ class EventNewLayers(wx.PyCommandEvent):
         return self.layers
 
 
-    
-    
+
+
 
 class PanelAnimatedFigure(wx.Panel):
     def __init__(self, parent, figure, min_size=(640,400)):
@@ -36,7 +36,7 @@ class PanelAnimatedFigure(wx.Panel):
         self.canvas = FigureCanvasWxAgg(self, -1, figure)
         self.canvas.SetMinSize(self.fixed_min_size)
         self.canvas.draw_idle()
-        
+
         self.sizer = wx.BoxSizer(wx.VERTICAL)
 
         self.sizer.Add(self.canvas, 1, wx.BOTTOM|wx.EXPAND, 0)
@@ -44,7 +44,7 @@ class PanelAnimatedFigure(wx.Panel):
 
         self.Fit()
 
-        
+
     def LoadFigure(self,figure):
         self.Freeze()
         self.Disable()
@@ -92,14 +92,14 @@ class PanelMaterialCreator(wx.Panel):
         self.sizer = wx.BoxSizer(wx.VERTICAL)
 
 
-        
+
         self.button_create= wx.Button(self)
         self.localizer.link(self.button_create.SetLabel, "button_create_mat", "button_create_mat")
         self.localizer.link(self.button_create.SetToolTip, "button_create_mat_tooltip", "button_create_mat_tooltip")
-        self.sizer.Add(self.button_create,0, wx.ALL | wx.EXPAND,2)
-        
+        self.sizer.Add(self.button_create,0, wx.ALL | wx.EXPAND,5)
+
         self.ctrl_save_name= wx.TextCtrl(self)
-        self.sizer.Add(self.ctrl_save_name,0, wx.ALL | wx.EXPAND,2)
+        self.sizer.Add(self.ctrl_save_name,0, wx.ALL | wx.EXPAND,5)
 
 
 
@@ -131,7 +131,7 @@ class PanelLayer(wx.Panel):
         self.sizer.Add(self.input_layer_width)
 
         self.list_choices=["custom"]+list(DefaultMaterials.keys())
-        
+
 
         self.typechoice= wx.Choice(self,choices=self.list_choices)
         self.typechoice.SetSelection(0)
@@ -163,9 +163,9 @@ class PanelLayer(wx.Panel):
         if iselect>0:
             mat=DefaultMaterials[mat_name]
             self.input_layer_mat_lambda.SetValue(mat.la)
-            
+
             self.input_layer_mat_rho.SetValue(mat.rho)
-            
+
             self.input_layer_mat_cp.SetValue(mat.Cp)
             self.disable_mat_input()
         else:
@@ -242,14 +242,14 @@ class PanelLayerList(wx.Panel):
             self.parent.Fit()
             return True
         return False
-        
+
     def gather_layers(self):
         layers=[]
         for panel_layer in self.layer_panels:
             layer = panel_layer.get_layer()
             layers.append(layer)
         return layers
-        
+
     def set_layer_amount(self, n):
         while len(self.layer_panels)>n:
             self.remove_layer()
@@ -262,7 +262,7 @@ class PanelLayerList(wx.Panel):
         for i in range(len(layers)):
             self.layer_panels[i].set_layer(layers[i])
         self.Thaw()
-        
+
 
 class PanelLayerMgr(wx.Panel):
     def __init__(self, parent, localizer=Localizer()):
@@ -272,29 +272,29 @@ class PanelLayerMgr(wx.Panel):
 
         self.sizer_h = wx.BoxSizer(wx.HORIZONTAL)
 
-        self.button_edit= wx.Button(self, label="Edit layers")
+        self.button_edit= wx.Button(self)
         self.localizer.link(self.button_edit.SetLabel, "button_edit", "button_edit")
-        
-        self.button_add= wx.Button(self, label='Add layer')
+
+        self.button_add= wx.Button(self)
         self.localizer.link(self.button_add.SetLabel, "button_add", "button_add")
-        
-        self.button_remove= wx.Button(self, label='Remove layer')
+
+        self.button_remove= wx.Button(self)
         self.localizer.link(self.button_remove.SetLabel, "button_remove", "button_remove")
-        
-        self.button_load= wx.Button(self, label='Load')
+
+        self.button_load= wx.Button(self)
         self.localizer.link(self.button_load.SetLabel, "button_load", "button_load")
         self.localizer.link(self.button_load.SetToolTip, "button_load_tooltip", "button_load_tooltip")
-        
-        
+
+
 
         self.list_scenarios=["custom"]+list(DefaultScenarios.keys())
         self.choice_scenario= wx.Choice(self,choices=self.list_scenarios)
         self.choice_scenario.SetSelection(0)
-        
-        self.button_save= wx.Button(self, label='Load')
+
+        self.button_save= wx.Button(self)
         self.localizer.link(self.button_save.SetLabel, "button_save", "button_save")
         self.localizer.link(self.button_save.SetToolTip, "button_save_tooltip", "button_save_tooltip")
-        
+
         self.ctrl_save_name= wx.TextCtrl(self)
         # ~ self.localizer.link(self.ctrl_save_name.SetLabel, "button_save", "button_save")
         # ~ self.localizer.link(self.ctrl_save_name.SetToolTip, "button_save_tooltip", "button_save_tooltip")
@@ -306,7 +306,7 @@ class PanelLayerMgr(wx.Panel):
         self.sizer_h.Add(self.button_load, 0, wx.ALL, 5)
         self.sizer_h.Add(self.choice_scenario, 0, wx.ALL, 5)
         self.sizer_h.Add(self.button_save, 0, wx.ALL, 5)
-        self.sizer_h.Add(self.ctrl_save_name, 0, wx.ALL, 5)
+        self.sizer_h.Add(self.ctrl_save_name, 0, wx.ALL | wx.EXPAND, 5)
 
 
 
@@ -314,21 +314,21 @@ class PanelLayerMgr(wx.Panel):
 
 
 
-        self.sizer_v.Add(self.sizer_h, 0, wx.ALL, 3)
+        self.sizer_v.Add(self.sizer_h, 0, wx.ALL, 0)
 
         self.panel_layer_list=PanelLayerList(self)
         self.sizer_v.Add(self.panel_layer_list, 0, wx.ALL, 3)
-        
+
         self.button_edit.Bind(wx.EVT_BUTTON, self.on_press_button_edit)
         self.button_add.Bind(wx.EVT_BUTTON, self.on_press_add_layer)
         self.button_remove.Bind(wx.EVT_BUTTON, self.on_press_remove_layer)
         self.button_load.Bind(wx.EVT_BUTTON, self.on_press_load_scenario)
-        
+
 
 
         self.SetSizer(self.sizer_v)
-        
-        
+
+
         self.Fit()
 
         self.is_frozen=False
@@ -336,7 +336,7 @@ class PanelLayerMgr(wx.Panel):
 
     def on_press_button_edit(self,event):
         self.toggle_edit()
-        
+
     def toggle_edit(self, set_custom=True):
         self.is_frozen=not(self.is_frozen)
         if not(self.is_frozen): # set it to unfrozen state
@@ -355,23 +355,23 @@ class PanelLayerMgr(wx.Panel):
             self.button_add.Disable()
             self.button_remove.Disable()
             self.send_layers()
-            
+
 
     def send_layers(self):
         layers=self.panel_layer_list.gather_layers()
         event = EventNewLayers(myEVT_NEW_LAYERS, self.GetId())
         event.SetLayers(layers)
         self.GetEventHandler().ProcessEvent(event)
-        
+
     def on_press_add_layer(self, event):
         self.panel_layer_list.add_layer()
         self.button_remove.Enable()
-        
+
     def on_press_remove_layer(self, event):
         self.panel_layer_list.remove_layer()
         if len(self.panel_layer_list.layer_panels)==1:
             self.button_remove.Disable()
-        
+
     def on_press_load_scenario(self,event):
         sel=self.choice_scenario.GetSelection()
         if (self.is_frozen):
@@ -418,7 +418,7 @@ class PanelWallInfo(wx.Panel):
 
         self.info_time=wx.StaticText(self,label="")
         self.sizer_v.Add(self.info_time, 0, wx.LEFT, 3)
-        
+
         self.info_dt=wx.StaticText(self,label="")
         self.sizer_v.Add(self.info_dt, 0, wx.LEFT, 3)
 
@@ -429,7 +429,7 @@ class PanelWallInfo(wx.Panel):
         self.sizer_v.Add(self.info_phi, 0, wx.LEFT, 3)
         self.info_phi2=wx.StaticText(self,label="")
         self.sizer_v.Add(self.info_phi2, 0, wx.LEFT, 3)
-        
+
         self.info_Nx=wx.StaticText(self,label="")
         self.sizer_v.Add(self.info_Nx, 0, wx.LEFT, 3)
         self.info_limit=wx.StaticText(self,label="")
@@ -504,7 +504,7 @@ class MainPanel(wx.Panel):
         self.localizer.link(self.panel_menu.button_run.SetToolTip, "run_button_tooltip", "run_button_tooltip")
         self.panel_menu.button_run.Bind(wx.EVT_BUTTON, self.on_press_run)
         sizer_h.Add(self.panel_menu.button_run, 0, wx.ALL, space)
-        
+
         self.panel_menu.button_adv = wx.Button(self.panel_menu, label='Advance one timestep')
         self.localizer.link(self.panel_menu.button_adv.SetLabel, "button_advance", "button_advance")
         self.panel_menu.button_adv.Bind(wx.EVT_BUTTON, self.on_press_advance)
@@ -524,7 +524,7 @@ class MainPanel(wx.Panel):
         # ~ self.panel_menu.lang_choice.SetSelection(0)
         # ~ self.panel_menu.lang_choice.Bind(wx.EVT_CHOICE, self.on_lang_choice)
         # ~ sizer_h.Add(self.panel_menu.lang_choice, 0, wx.ALL, space)
-        
+
         self.panel_menu.SetSizer(sizer_h)
 
         self.sizer_v.Add(self.panel_menu,0, wx.ALL,2)
@@ -534,11 +534,11 @@ class MainPanel(wx.Panel):
         self.mat_creator=PanelMaterialCreator(self, localizer=self.localizer)
         self.layermgr=PanelLayerMgr(self, localizer=self.localizer)
         self.layermgr.panel_layer_list.load_layers(self.wall.layers)
-        
+
         sizer_h=wx.BoxSizer(wx.HORIZONTAL)
         sizer_h.Add(self.mat_creator,0, wx.ALL | wx.EXPAND,2)
         sizer_h.Add(self.layermgr,0, wx.ALL,2)
-        
+
         self.sizer_v.Add(sizer_h,0, wx.ALL | wx.ALL,2)
 # =============================================================================
 # panel to show animated figure
@@ -589,15 +589,18 @@ class MainPanel(wx.Panel):
 # bindings
 # =============================================================================
         # manage main update
-        self.updates=0
-        self.time_last_redraw=time.process_time()
+        self.updates_since_redraw=0
+        self.time_since_redraw=0
+        self.time_last_redraw=time.perf_counter_ns()
+
         self.this_run_time=0
         self.this_run_updates=0
-        
+
+#        self.thread_update_loop = Thread(target=self.update_loop_thread)
         self.timer_update_redraw= wx.Timer(self)
         self.Bind(wx.EVT_TIMER, self.on_timer_redraw, self.timer_update_redraw)
-        
-        
+
+
 
         self.Bind(EVT_NEW_LAYERS, self.on_receive_layers)
 
@@ -615,12 +618,15 @@ class MainPanel(wx.Panel):
     def on_press_run(self, event):
         self.run_sim=not(self.run_sim)
         if self.run_sim:
-            self.update_in_thread()
-            self.timer_update_redraw.Start(30)
+            self.this_run_start=time.perf_counter_ns()
+            self.thread_update_loop = Thread(target=self.update_loop_thread)
+            self.thread_update_loop.start()
+            self.timer_update_redraw.Start(50)
             self.localizer.link(self.panel_menu.button_run.SetLabel, "run_button_pause", "run_button")
             self.panel_menu.button_adv.Disable()
         else:
             self.timer_update_redraw.Stop()
+            self.thread_update_loop.join()
             self.localizer.link(self.panel_menu.button_run.SetLabel, "run_button", "run_button")
             self.panel_menu.button_adv.Enable()
             self.this_run_time=0
@@ -653,59 +659,49 @@ class MainPanel(wx.Panel):
         self.wall.set_outside_temp(Tout)
         if not(self.run_sim):
             self.redraw()
-            
-    # ~ def on_lang_choice(self,event):
-        # ~ sel=self.panel_menu.lang_choice.GetSelection()
-        # ~ lang=self.localizer.langs[sel]
-        # ~ self.localizer.set_lang(lang)
-        # ~ self.Layout()
 
 
-    def on_timer_update(self,event):
-        self.update_sim()
-        self.updates+=1
+
     def on_press_advance(self,event):
-        self.update_sim()
-        self.redraw()
-        
-    def on_timer_redraw(self,event):
-        if self.thread.is_alive():
-            self.thread.join()
-            
-        self.redraw()
-        # ~ print("updates since last redraw ",self.updates)
-        
-        time_new_redraw=time.process_time()
-        self.time_since_redraw=time_new_redraw-self.time_last_redraw
-        # ~ print("updates since last redraw ",self.time_since_redraw * 1000, 'ms')
-        
-        self.this_run_time+=self.time_since_redraw
-        self.this_run_updates+=self.updates
-        # ~ print("updates per seconds :",self.this_run_updates/self.this_run_time)
-        # ~ print("progression to statio :",self.wall.time_to_statio/(self.wall.time+self.wall.dt))
-        
-        self.time_last_redraw=time.process_time()
-        
-        self.updates=0
-        
-        self.update_in_thread()
-        
-    def update_in_thread(self):
-        self.thread = Thread(target=self.update_sim)
-        self.thread.start()
-        self.updates+=1
-        
-    def update_sim(self):
-        
         self.wall.advance_time()
-        
-        if self.run_sim:
-            time_new_redraw=time.process_time()
+        self.redraw()
+
+    def on_timer_redraw(self,event):
+
+        self.redraw()
+        print("updates since last redraw ",self.updates_since_redraw)
+
+        time_new_redraw=time.perf_counter_ns()
+        self.time_since_redraw=time_new_redraw-self.time_last_redraw
+        print("time since last redraw ",self.time_since_redraw/1e6, 'ms')
+
+        self.this_run_time=time_new_redraw-self.this_run_start
+        self.this_run_updates+=self.updates_since_redraw
+        print("updates per seconds :",1e9*self.this_run_updates/self.this_run_time)
+        print("progression to statio :",self.wall.time_to_statio/(self.wall.time+self.wall.dt))
+
+        self.time_last_redraw=time.perf_counter_ns()
+
+        self.updates_since_redraw=0
+
+
+
+
+    def update_loop_thread(self):
+        time_new_redraw=time.perf_counter_ns()
+        self.time_since_redraw=time_new_redraw-self.time_last_redraw
+        while self.run_sim:
+            time.sleep(0.00001)
+            time_new_redraw=time.perf_counter_ns()
             self.time_since_redraw=time_new_redraw-self.time_last_redraw
-            
-            if self.time_since_redraw*1000 < self.timer_update_redraw.GetInterval() and not(self.time_since_redraw > 0 and self.updates/self.time_since_redraw > self.wall.steps_to_statio/self.wall.limiter_ratio):
-                wx.CallAfter(self.update_in_thread)
-        
+            needRedraw=self.time_since_redraw < self.timer_update_redraw.GetInterval()*1000000
+
+            isTooFast=self.time_since_redraw > 0 and self.updates_since_redraw/self.time_since_redraw*1e9 > self.wall.steps_to_statio/self.wall.limiter_ratio
+            if  needRedraw and not(isTooFast):
+                self.wall.advance_time()
+                self.updates_since_redraw+=1
+            elif isTooFast:
+                print("limiting updates per sec")
 
 
 
@@ -713,43 +709,46 @@ class MainPanel(wx.Panel):
         self.panel_info.update_info(self.wall)
         self.wall.draw()
         self.panelfig.LoadFigure(self.wall.figure)
-        
-        
+
+
 
 
 class MainFrame(wx.Frame):
     def __init__(self):
-        super().__init__(parent=None, title='wall-simulator', style=wx.DEFAULT_FRAME_STYLE & ~(wx.RESIZE_BORDER))
-        
+        super().__init__(parent=None, title='wall-simulator', style=wx.DEFAULT_FRAME_STYLE)
+
         self.localizer=Localizer()
         self.localizer.set_lang("fr")
         menubar = wx.MenuBar()
-        menu_edit=wx.Menu()
+        menu_file=wx.Menu()
         menu_lang=wx.Menu()
-        
-        
-        actions={}
+
+
+
         for lang in self.localizer.langs:
-            item=menu_lang.Append(-1, lang.upper(), '')
-            self.Bind(wx.EVT_MENU,  self.on_lang_change)
-            
-            
-        
+            menu_lang.Append(-1, lang.upper(), '')
+
+        self.Bind(wx.EVT_MENU,  self.on_lang_change)
+
+
+
         # ~ menu_edit.AppendSubMenu(menu_lang, 'Lang')
-        
-        menubar.Append(menu_lang, 'Lang')
-        
+
+        menubar.Append(menu_file, 'File')
+
+        menubar.Append(menu_lang, 'Language')
+
         self.SetMenuBar(menubar)
-        
-        
-        
+
+
+
         self.main_panel=MainPanel(self, localizer=self.localizer)
-        
+
         self.sizer_v = wx.BoxSizer(wx.VERTICAL)
 
         self.sizer_v.Add(self.main_panel, 1, wx.EXPAND, 0)
 
-        
+
         self.SetSizer(self.sizer_v)
         self.sizer_v.SetSizeHints(self)
 # =============================================================================
@@ -758,8 +757,9 @@ class MainFrame(wx.Frame):
         # ~ display = wx.Display(0)
         # ~ x, y, w, h = display.GetGeometry()
         # ~ self.SetPosition((w, h))
+        self.Maximize(True)
         self.Show()
-        # ~ self.Maximize(True)
+
 
     def on_lang_change(self,event):
         self.localizer.set_lang(event.GetEventObject().FindItemById(event.GetId()).GetItemLabel().lower())
