@@ -42,12 +42,9 @@ class PanelAnimatedFigure(wx.Panel):
         self.SetSizer(self.sizer)
         self.Fit()
         # ~ self.canvas.draw()
-        # ~ self.Refresh()
-        # ~ self.Fit()
         old.Destroy()
         self.Enable()
         self.Thaw()
-        # ~ self.Refresh()
         
 
 class PanelNumericInput(wx.Panel):
@@ -127,7 +124,6 @@ class PanelLayer(wx.Panel):
             self.input_layer_mat_lambda.Enable()
             self.input_layer_mat_rho.Enable()
             self.input_layer_mat_cp.Enable()
-        # ~ print("on_choice was triggered. Selected item is: " + str(self.typechoice.GetSelection()))
         
         
     def get_layer(self):
@@ -363,6 +359,7 @@ class MainFrame(wx.Frame):
         self.Bind(EVT_NEW_LAYERS, self.on_receive_layers)
              
         self.Show()
+        self.Maximize(True)
         
         
         
@@ -378,26 +375,11 @@ class MainFrame(wx.Frame):
             self.button_run.SetLabel("Run")
             self.panel_params.input_dt.Enable()
             
-        # ~ self.text_ctrl = wx.TextCtrl(panel)
-        # ~ my_sizer.Add(self.text_ctrl, 0, wx.ALL | wx.EXPAND, 5)    
-        # ~ value = self.text_ctrl.GetValue()
-        # ~ if not value:
-            # ~ print("You didn't enter anything!")
-        # ~ else:
-            # ~ print(f'You typed: "{value}"')
-
+            
     def on_receive_layers(self, event):
         layers=event.GetLayers()
         self.wall.change_layers(layers)
-        
-        
-        # ~ print(len(self.wall.layers))
         self.redraw()
-        # ~ self.wall.ax.clear()
-        # ~ self.wall.draw_wall()
-        # ~ self.panelfig.LoadFigure(self.wall.figure)
-        
-        # ~ print(layers[0].e)
         
     def on_press_statio(self,event):
         self.wall.solve_stationnary()
@@ -441,6 +423,7 @@ class MainFrame(wx.Frame):
         
 if __name__ == '__main__':
     app = wx.App()
+    
     frame = MainFrame()
     
     
