@@ -299,7 +299,7 @@ class Wall:
                 layerleft=self.layers[i-1]
                 Tleft=layerleft.Tmesh
                 
-                r = layerleft.mat.la / layer.mat.la
+                r = (layerleft.mat.la/layerleft.dx) / (layer.mat.la/layer.dx)
                 Tup[0]=1 / (1+r) * ( T[1] + r * Tleft[-2])
 
             if i==len(self.layers)-1:
@@ -308,7 +308,7 @@ class Wall:
                 layerright=self.layers[i+1]
                 Tright=layerright.Tmesh
                 
-                r = layerright.mat.la / layer.mat.la
+                r = (layerright.mat.la/layerright.dx) / (layer.mat.la/layer.dx)
                 Tup[-1] = 1 / (1+r) * (T[-2] + r * Tright[1])
 
                 
