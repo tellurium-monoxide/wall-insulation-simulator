@@ -6,6 +6,7 @@ from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg
 #from matplotlib.backends.backend_wx import NavigationToolbar2Wx
 from threading import Thread
 import time
+import copy
 from wall import Wall, Layer, Material, DefaultMaterials, DefaultScenarios
 
 from localizer.localizer import Localizer
@@ -59,28 +60,48 @@ class PanelAnimatedFigure(wx.Panel):
         self.Thaw()
 
 
-class ValidatorNumericInputOnly(wx.Validator):
-    def __init__(self, fraction_width=3):
+class ValidatorDecimalInputOnly(wx.Validator):
+    def __init__(self, integer_width=4, fraction_width=3):
         wx.Validator.__init__(self)
         self.Bind(wx.EVT_CHAR, self.filter_keys)
-        self.allowedUnicodeKeys=[8, 46, 49, 50, 51, 52, 53, 54, 55, 56, 57]
-        self.allowedkeyCodes=[314, 316]
+        self.Bind(wx.EVT_TEXT, self.control_length)
+        self.allowedASCIIKeys=[ 46, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57]
+        self.allowedControlKeys=[8,314, 316]
+        self.allowedWXKeys=[wx.WXK_BACK, wx.WXK_DELETE, wx.WXK_NUMPAD0, wx.WXK_NUMPAD1, wx.WXK_NUMPAD2, wx.WXK_NUMPAD3, wx.WXK_NUMPAD4, wx.WXK_NUMPAD5, wx.WXK_NUMPAD6, wx.WXK_NUMPAD7,
+                                        wx.WXK_NUMPAD8, wx.WXK_NUMPAD9, wx.WXK_DECIMAL,wx.WXK_LEFT,wx.WXK_RIGHT]
+
+        self.allowedkeyCodes=self.allowedASCIIKeys+self.allowedWXKeys+self.allowedControlKeys
+        self.integer_width=integer_width
         self.fraction_width=fraction_width
-#
+        # ~ self.previous_text=""
+        
 
 
     def filter_keys(self,event):
         key=event.GetUnicodeKey()
         keyCode=event.GetKeyCode()
         textCtrl = self.GetWindow()
+        # ~ print(dir(event.EventObject))
+        
         entered=textCtrl.GetValue()
-#        split=entered.split()
-        print(entered)
-        willRepeatPeriod= (key==46 and ('.' in entered))
-#        print(key)
-#        print(keyCode)
-        if not(willRepeatPeriod) and( key in self.allowedUnicodeKeys or keyCode in self.allowedkeyCodes ):
+        split=entered.split(".")
+        self.previous_text=entered
+        willRepeatPeriod= (keyCode==46 and ('.' in entered))
+
+        if not(willRepeatPeriod) and( key in self.allowedkeyCodes or keyCode in self.allowedkeyCodes ):
             event.Skip()
+    def control_length(self,event):
+        # ~ print(dir(event.EventObject))
+        textCtrl = self.GetWindow()
+        entered=textCtrl.GetValue()
+        split=entered.split(".")
+        print(split)
+        if (len(split)>1 and len(split[1])>self.fraction_width) or len(split[0])>self.integer_width:
+            textCtrl.ChangeValue(self.previous_text)
+        if len(entered)==0:
+            textCtrl.ChangeValue("1")
+        
+
 
 
 
@@ -89,7 +110,7 @@ class ValidatorNumericInputOnly(wx.Validator):
 
              Note that every validator must implement the Clone() method.
          """
-         return ValidatorNumericInputOnly()
+         return ValidatorDecimalInputOnly()
 
 
     def Validate(self, win):
@@ -138,7 +159,7 @@ class PanelNumericInput(wx.Panel):
         self.label=wx.StaticText(self, label=name, style=wx.ALIGN_RIGHT)
         self.eq=wx.StaticText(self, label=" = ",)
 
-        self.num_ctrl = wx.TextCtrl(self, value=str(def_val), validator=ValidatorNumericInputOnly())
+        self.num_ctrl = wx.TextCtrl(self, value=str(def_val), validator=ValidatorDecimalInputOnly())
         self.unit=wx.StaticText(self, label=unit)
 
         self.sizer_h=wx.BoxSizer(wx.HORIZONTAL)
@@ -186,7 +207,7 @@ class PanelMaterialCreator(wx.Panel):
         self.localizer.link(self.button_create.SetLabel, "button_create_mat", "button_create_mat")
         self.localizer.link(self.button_create.SetToolTip, "button_create_mat_tooltip", "button_create_mat_tooltip")
 
-        self.ctrl_save_name= wx.TextCtrl(self, validator=ValidatorNumericInputOnly())
+        self.ctrl_save_name= wx.TextCtrl(self, validator=ValidatorDecimalInputOnly())
         sizer_h2.Add(self.ctrl_save_name,1, wx.ALL | wx.EXPAND,5)
         sizer_h2.Add(self.button_create,0, wx.ALL,5)
 
@@ -768,16 +789,16 @@ class MainPanel(wx.Panel):
     def on_timer_redraw(self,event):
 
         self.redraw()
-        print("updates since last redraw ",self.updates_since_redraw)
+        # ~ print("updates since last redraw ",self.updates_since_redraw)
 
         time_new_redraw=time.perf_counter_ns()
         self.time_since_redraw=time_new_redraw-self.time_last_redraw
-        print("time since last redraw ",self.time_since_redraw/1e6, 'ms')
+        # ~ print("time since last redraw ",self.time_since_redraw/1e6, 'ms')
 
         self.this_run_time=time_new_redraw-self.this_run_start
         self.this_run_updates+=self.updates_since_redraw
-        print("updates per seconds :",1e9*self.this_run_updates/self.this_run_time)
-        print("progression to statio :",self.wall.time_to_statio/(self.wall.time+self.wall.dt))
+        # ~ print("updates per seconds :",1e9*self.this_run_updates/self.this_run_time)
+        # ~ print("progression to statio :",self.wall.time_to_statio/(self.wall.time+self.wall.dt))
 
         self.time_last_redraw=time.perf_counter_ns()
 
@@ -799,8 +820,8 @@ class MainPanel(wx.Panel):
             if  needRedraw and not(isTooFast):
                 self.wall.advance_time()
                 self.updates_since_redraw+=1
-            elif isTooFast:
-                print("limiting updates per sec")
+            # ~ elif isTooFast:
+                # ~ print("limiting updates per sec")
 
 
 
@@ -827,7 +848,7 @@ class MainFrame(wx.Frame):
         for lang in self.localizer.langs:
             menu_lang.Append(-1, lang.upper(), '')
 
-        self.Bind(wx.EVT_MENU,  self.on_lang_change)
+        menu_lang.Bind(wx.EVT_MENU,  self.on_lang_change)
 
 
 
@@ -856,7 +877,7 @@ class MainFrame(wx.Frame):
         # ~ display = wx.Display(0)
         # ~ x, y, w, h = display.GetGeometry()
         # ~ self.SetPosition((w, h))
-        self.Maximize(True)
+        # ~ self.Maximize(True)
         self.Show()
 
 
