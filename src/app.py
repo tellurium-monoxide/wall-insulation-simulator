@@ -91,30 +91,42 @@ class PanelMaterialCreator(wx.Panel):
         self.localizer=localizer
         self.sizer = wx.BoxSizer(wx.VERTICAL)
 
+        sizer_h1=wx.BoxSizer(wx.HORIZONTAL)
+        self.choice_delete = wx.Choice(self, choices=list(DefaultMaterials.keys()))
 
+        self.button_delete= wx.Button(self)
+        self.localizer.link(self.button_delete.SetLabel, "button_delete_mat", "button_delete_mat")
+        self.localizer.link(self.button_delete.SetToolTip, "button_delete_mat_tooltip", "button_delete_mat_tooltip")
+
+        sizer_h1.Add(self.choice_delete,1, wx.ALL | wx.EXPAND,5)
+        sizer_h1.Add(self.button_delete,0, wx.ALL,5)
+
+        self.sizer.Add(sizer_h1,0,wx.EXPAND,0)
+
+        sizer_h2=wx.BoxSizer(wx.HORIZONTAL)
 
         self.button_create= wx.Button(self)
         self.localizer.link(self.button_create.SetLabel, "button_create_mat", "button_create_mat")
         self.localizer.link(self.button_create.SetToolTip, "button_create_mat_tooltip", "button_create_mat_tooltip")
-        self.sizer.Add(self.button_create,0, wx.ALL | wx.EXPAND,5)
 
         self.ctrl_save_name= wx.TextCtrl(self)
-        self.sizer.Add(self.ctrl_save_name,0, wx.ALL | wx.EXPAND,5)
+        sizer_h2.Add(self.ctrl_save_name,1, wx.ALL | wx.EXPAND,5)
+        sizer_h2.Add(self.button_create,0, wx.ALL,5)
 
-
+        self.sizer.Add(sizer_h2,0,wx.EXPAND,0)
 
         # ask for mat param 1: lambda
         self.input_layer_mat_lambda=PanelNumericInput(self,name="\u03BB", unit="W/m/K")
-        self.sizer.Add(self.input_layer_mat_lambda)
+        self.sizer.Add(self.input_layer_mat_lambda,0,wx.EXPAND,0)
 
 
         # ask for mat param 2: rho
         self.input_layer_mat_rho=PanelNumericInput(self,name="\u03C1",unit="kg/m3")
-        self.sizer.Add(self.input_layer_mat_rho)
+        self.sizer.Add(self.input_layer_mat_rho,0,wx.EXPAND,0)
 
         # ask for mat param 3: Cp
         self.input_layer_mat_cp=PanelNumericInput(self,name="Cp",unit="J/kg/K")
-        self.sizer.Add(self.input_layer_mat_cp)
+        self.sizer.Add(self.input_layer_mat_cp,0,wx.EXPAND,0)
 
 
 
@@ -128,7 +140,7 @@ class PanelLayer(wx.Panel):
 
 
         self.input_layer_width=PanelNumericInput(self,name="e", unit="mm", unit_scale=1000, fractionWidth = 0)
-        self.sizer.Add(self.input_layer_width)
+        self.sizer.Add(self.input_layer_width,0,wx.EXPAND,0)
 
         self.list_choices=["custom"]+list(DefaultMaterials.keys())
 
@@ -141,16 +153,16 @@ class PanelLayer(wx.Panel):
 
         # ask for mat param 1: lambda
         self.input_layer_mat_lambda=PanelNumericInput(self,name="\u03BB", unit="W/m/K")
-        self.sizer.Add(self.input_layer_mat_lambda)
+        self.sizer.Add(self.input_layer_mat_lambda,0,wx.EXPAND,0)
 
 
         # ask for mat param 2: rho
         self.input_layer_mat_rho=PanelNumericInput(self,name="\u03C1",unit="kg/m3")
-        self.sizer.Add(self.input_layer_mat_rho)
+        self.sizer.Add(self.input_layer_mat_rho,0,wx.EXPAND,0)
 
         # ask for mat param 3: Cp
         self.input_layer_mat_cp=PanelNumericInput(self,name="Cp",unit="J/kg/K")
-        self.sizer.Add(self.input_layer_mat_cp)
+        self.sizer.Add(self.input_layer_mat_cp,0,wx.EXPAND,0)
 
 
 
