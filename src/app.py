@@ -59,6 +59,10 @@ class PanelAnimatedFigure(wx.Panel):
         self.Thaw()
 
 
+class ValidatorNumericInputOnly(wx.Validator):
+    def __init__(self):
+        wx.Validator()
+
 class PanelNumericInput(wx.Panel):
     def __init__(self, parent, name="", def_val=1,integerWidth = 6,fractionWidth = 3, unit="", unit_scale=1):
         wx.Panel.__init__(self, parent)
@@ -86,15 +90,20 @@ class PanelNumericInput(wx.Panel):
 
 
 class PanelMaterialCreator(wx.Panel):
-    def __init__(self, parent, localizer=Localizer()):
+    def __init__(self, parent, localizer=None):
         wx.Panel.__init__(self, parent, style=wx.BORDER_STATIC)
-        self.localizer=localizer
+
+        self.localizer=Localizer.get_localizer(localizer)
+
         self.sizer = wx.BoxSizer(wx.VERTICAL)
 
         sizer_h1=wx.BoxSizer(wx.HORIZONTAL)
         self.choice_delete = wx.Choice(self, choices=list(DefaultMaterials.keys()))
+        self.choice_delete.SetSelection(0)
+
 
         self.button_delete= wx.Button(self)
+        self.button_delete.Bind(wx.EVT_BUTTON, self.on_button_delete)
         self.localizer.link(self.button_delete.SetLabel, "button_delete_mat", "button_delete_mat")
         self.localizer.link(self.button_delete.SetToolTip, "button_delete_mat_tooltip", "button_delete_mat_tooltip")
 
@@ -132,6 +141,16 @@ class PanelMaterialCreator(wx.Panel):
 
         self.SetSizer(self.sizer)
         self.Fit()
+
+    def on_button_delete(self, event):
+        confirm_dialog=wx.MessageDialog(self, "del", style=wx.OK | wx.CANCEL | wx.CANCEL_DEFAULT | wx.ICON_WARNING)
+
+        answer=confirm_dialog.ShowModal()
+        if answer == wx.ID_OK:
+            print("ok")
+        elif answer == wx.CANCEL:
+            print("cancel")
+
 class PanelLayer(wx.Panel):
     def __init__(self, parent):
         wx.Panel.__init__(self, parent)
