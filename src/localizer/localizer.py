@@ -85,7 +85,11 @@ class Localizer:
         self.lang=lang
         for key, link in self.links.items():
             setter,text_id=link
-            setter(self.get_text(text_id))
+            try:
+                setter(self.get_text(text_id))
+            except RuntimeError:
+                continue
+
             # ~ print(text_id)
     @staticmethod
     def get_localizer(localizer=None):

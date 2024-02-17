@@ -20,28 +20,31 @@ from physics_module.solver import SolverHeatEquation1dMultilayer as Solver
 
 
 class ValidatorDecimalInputOnly(wx.Validator):
-    def __init__(self, integer_width=4, fraction_width=3):
+    def __init__(self, integer_width=4, fraction_width=3, min_value=0, max_value=10000):
         wx.Validator.__init__(self)
         self.Bind(wx.EVT_CHAR, self.filter_keys)
         self.Bind(wx.EVT_TEXT, self.control_length)
         self.allowedASCIIKeys=[ 46, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57]
-        self.allowedControlKeys=[8,314, 316]
+        self.allowedControlKeys=[8,312, 314, 316]
         self.allowedWXKeys=[wx.WXK_BACK, wx.WXK_DELETE, wx.WXK_NUMPAD0, wx.WXK_NUMPAD1, wx.WXK_NUMPAD2, wx.WXK_NUMPAD3, wx.WXK_NUMPAD4, wx.WXK_NUMPAD5, wx.WXK_NUMPAD6, wx.WXK_NUMPAD7,
                                         wx.WXK_NUMPAD8, wx.WXK_NUMPAD9, wx.WXK_DECIMAL,wx.WXK_LEFT,wx.WXK_RIGHT]
 
         self.allowedkeyCodes=self.allowedASCIIKeys+self.allowedWXKeys+self.allowedControlKeys
         self.integer_width=integer_width
         self.fraction_width=fraction_width
+        self.min_value=min_value
+        self.max_value=max_value
         # ~ self.previous_text=""
-        
+
 
 
     def filter_keys(self,event):
         key=event.GetUnicodeKey()
         keyCode=event.GetKeyCode()
         textCtrl = self.GetWindow()
-        # ~ print(dir(event.EventObject))
-        
+        # print(dir(event.EventObject))
+        # print("keycode: ",key,keyCode)
+
         entered=textCtrl.GetValue()
         split=entered.split(".")
         self.previous_text=entered
@@ -53,13 +56,21 @@ class ValidatorDecimalInputOnly(wx.Validator):
         # ~ print(dir(event.EventObject))
         textCtrl = self.GetWindow()
         entered=textCtrl.GetValue()
+        if len(entered)>0:
+            val=float(entered)
+            if val < self.min_value:
+                textCtrl.ChangeValue(str(self.min_value))
+            if val > self.max_value:
+                textCtrl.ChangeValue(str(self.max_value))
         split=entered.split(".")
-        print(split)
-        if (len(split)>1 and len(split[1])>self.fraction_width) or len(split[0])>self.integer_width:
+        # print(split)
+        if (len(split)>1 and len(split[1])>self.fraction_width):
             textCtrl.ChangeValue(self.previous_text)
-        if len(entered)==0:
-            textCtrl.ChangeValue("1")
-        
+        if len(entered)>=2 and entered[0]=="0" and entered[1]=="0":
+            textCtrl.ChangeValue(self.previous_text)
+        # if len(entered)==0:
+            # textCtrl.ChangeValue("1")
+
 
 
 

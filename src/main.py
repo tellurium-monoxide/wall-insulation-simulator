@@ -18,21 +18,8 @@ from localizer.localizer import Localizer
 # interface imports
 
 from panel_input_physical_value import PanelNumericInput as PanelNumericInput
-from panel_wall_creator import PanelLayerMgr, PanelMaterialCreator
+from panel_wall_creator import PanelLayerMgr, PanelMaterialCreator, EVT_WALL_SETUP_CHANGED
 
-myEVT_NEW_LAYERS = wx.NewEventType()
-EVT_NEW_LAYERS = wx.PyEventBinder(myEVT_NEW_LAYERS, 1)
-
-class EventNewLayers(wx.PyCommandEvent):
-    def __init__(self, evtType, id):
-        wx.PyCommandEvent.__init__(self, evtType, id)
-        self.layers = None
-
-    def SetLayers(self, val):
-        self.layers = val
-
-    def GetLayers(self):
-        return self.layers
 
 
 
@@ -149,12 +136,6 @@ class MainPanel(wx.Panel):
         dt=1
         solver.set_time_step(dt)
 
-        mat1=Material(la=1,rho=1,Cp=1)
-
-
-        layer1=Layer(e=1, mat=mat1)
-
-        solver.add_layer(layer1)
 
         solver.set_inside_temp(19)
         solver.set_outside_temp(5)
@@ -203,10 +184,6 @@ class MainPanel(wx.Panel):
         self.panel_menu.button_reset.Bind(wx.EVT_BUTTON, self.on_press_reset)
         sizer_h.Add(self.panel_menu.button_reset, 0, wx.ALL, space)
 
-        # ~ self.panel_menu.lang_choice=wx.Choice(self.panel_menu, choices=[s.upper() for s in self.localizer.langs])
-        # ~ self.panel_menu.lang_choice.SetSelection(0)
-        # ~ self.panel_menu.lang_choice.Bind(wx.EVT_CHOICE, self.on_lang_choice)
-        # ~ sizer_h.Add(self.panel_menu.lang_choice, 0, wx.ALL, space)
 
         self.panel_menu.SetSizer(sizer_h)
 
@@ -214,12 +191,12 @@ class MainPanel(wx.Panel):
 # =============================================================================
 # panel to manage layer
 # =============================================================================
-        self.mat_creator=PanelMaterialCreator(self, localizer=self.localizer)
-        self.layermgr=PanelLayerMgr(self, localizer=self.localizer)
+        # self.mat_creator=PanelMaterialCreator(self)
+        self.layermgr=PanelLayerMgr(self)
         self.layermgr.panel_layer_list.load_layers(self.solver.wall.layers)
 
         sizer_h=wx.BoxSizer(wx.HORIZONTAL)
-        sizer_h.Add(self.mat_creator,0, wx.ALL | wx.EXPAND,2)
+        # sizer_h.Add(self.mat_creator,0, wx.ALL | wx.EXPAND,2)
         sizer_h.Add(self.layermgr,0, wx.ALL,2)
 
         self.sizer_v.Add(sizer_h,0, wx.ALL | wx.ALL,2)
@@ -285,7 +262,7 @@ class MainPanel(wx.Panel):
 
 
 
-        self.Bind(EVT_NEW_LAYERS, self.on_receive_layers)
+        self.Bind(EVT_WALL_SETUP_CHANGED, self.on_receive_layers)
 
         self.slider_Tint.Bind(wx.EVT_SLIDER, self.on_slide_Tint)
         self.slider_Tout.Bind(wx.EVT_SLIDER, self.on_slide_Tout)
@@ -317,8 +294,8 @@ class MainPanel(wx.Panel):
 
 
     def on_receive_layers(self, event):
-        layers=event.GetLayers()
-        self.solver.change_layers(layers)
+        # ~ layers=event.GetLayers()
+        # ~ self.solver.change_layers(layers)
         self.redraw()
 
     def on_press_statio(self,event):
@@ -366,8 +343,6 @@ class MainPanel(wx.Panel):
         self.time_last_redraw=time.perf_counter_ns()
 
         self.updates_since_redraw=0
-
-
 
 
     def update_loop_thread(self):

@@ -50,7 +50,7 @@ def format_time(t):
             return "%ds" % (s)
     else:
         return "%dms" % (t*1000)
-# ~ Layer = namedtuple('Layer', ['e', 'la', 'rho','Cp','dx'])
+# Layer = namedtuple('Layer', ['e', 'la', 'rho','Cp','dx'])
 
 class SolverHeatEquation1dMultilayer:
 
@@ -68,8 +68,6 @@ class SolverHeatEquation1dMultilayer:
         self.dt=1
 
         self.phi_int_to_wall=0
-
-        self.wall_length=0
 
         self.Tmin=-10
         self.Tmax=40
@@ -89,7 +87,7 @@ class SolverHeatEquation1dMultilayer:
             layer.dx=layer.xmesh[1]-layer.xmesh[0]
             layer.Tmesh=np.zeros(layer.Npoints)
 
-            self.wall_length+=layer.e
+            current_length+=layer.e
             self.wall.layers[i]=layer
         self.time_to_statio=0
         self.steps_to_statio=0
@@ -104,7 +102,7 @@ class SolverHeatEquation1dMultilayer:
 
         dt= (layer.e/NPOINT_PREFERRED_PER_LAYER)**2 * self.courant / layer.mat.D
         self.set_time_step(dt)
-        # ~ layerNmax=max(self.wall.layers, key = lambda x:x.Npoints)
+        # layerNmax=max(self.wall.layers, key = lambda x:x.Npoints)
         layerNmin=min(self.wall.layers, key = lambda x:x.Npoints)
         if layerNmin.Npoints<5:
             dt= (layerNmin.e/NPOINT_MINIMAL_PER_LAYER)**2 * self.courant / layerNmin.mat.D
@@ -147,7 +145,7 @@ class SolverHeatEquation1dMultilayer:
         self.ax.axis("off")
         self.ax.margins(0)
 
-        wl=self.wall_length
+        wl=self.wall.length
         hspace=wl/4
         self.ax.set_xlim([-hspace,wl+hspace])
         vspace=1
@@ -175,7 +173,7 @@ class SolverHeatEquation1dMultilayer:
 
 
         self.ax.plot([-hspace,0],[self.Tint,self.Tint],color="r")
-        self.ax.plot([self.wall_length,self.wall_length+hspace],[self.Tout,self.Tout],color="cyan")
+        self.ax.plot([wl,wl+hspace],[self.Tout,self.Tout],color="cyan")
 
         for i in range(len(self.wall.layers)):
             self.ax.plot(self.wall.layers[i].xmesh,self.wall.layers[i].Tmesh)
