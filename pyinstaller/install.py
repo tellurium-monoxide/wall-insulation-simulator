@@ -6,7 +6,7 @@ import PyInstaller.__main__
 
 try:
     install_dir=(os.path.dirname(os.path.realpath(__file__)))
-    main_script=install_dir+'/../src/app.py'
+    main_script=install_dir+'/../src/main.py'
 
     PyInstaller.__main__.run([
         main_script,
