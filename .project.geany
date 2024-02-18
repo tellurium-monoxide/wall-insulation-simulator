@@ -28,10 +28,10 @@ long_line_behaviour=1
 long_line_column=72
 
 [files]
-current_page=2
+current_page=10
 FILE_NAME_0=16696;Python;0;EUTF-8;0;1;0;Y%3A%5CDocuments%5CCode%5Cwall-insulation-simulator%5Csrc%5Cmain.py;0;4
 FILE_NAME_1=335;Python;0;EUTF-8;0;1;0;Y%3A%5CDocuments%5CCode%5Cwall-insulation-simulator%5Csrc%5Cpanel_input_physical_value.py;0;4
-FILE_NAME_2=17567;Python;0;EUTF-8;0;1;0;Y%3A%5CDocuments%5CCode%5Cwall-insulation-simulator%5Csrc%5Cpanel_wall_creator.py;0;4
+FILE_NAME_2=11356;Python;0;EUTF-8;0;1;0;Y%3A%5CDocuments%5CCode%5Cwall-insulation-simulator%5Csrc%5Cpanel_wall_creator.py;0;4
 FILE_NAME_3=3053;Python;0;EUTF-8;0;1;0;Y%3A%5CDocuments%5CCode%5Cwall-insulation-simulator%5Csrc%5Clocalizer%5Clocalizer.py;0;4
 FILE_NAME_4=378;Python;0;EUTF-8;0;1;0;Y%3A%5CDocuments%5CCode%5Cwall-insulation-simulator%5Csrc%5Cphysics_module%5Clayered_wall.py;0;4
 FILE_NAME_5=3329;Python;0;EUTF-8;0;1;0;Y%3A%5CDocuments%5CCode%5Cwall-insulation-simulator%5Csrc%5Cphysics_module%5Cpresets.py;0;4
@@ -39,6 +39,7 @@ FILE_NAME_6=51;Python;0;EUTF-8;0;1;0;Y%3A%5CDocuments%5CCode%5Cwall-insulation-s
 FILE_NAME_7=175;Python;0;EUTF-8;0;1;0;Y%3A%5CDocuments%5CCode%5Cwall-insulation-simulator%5Csrc%5Cphysics_module%5Cmaterials.py;0;4
 FILE_NAME_8=272;Python;0;EUTF-8;0;1;0;Y%3A%5CDocuments%5CCode%5Cwall-insulation-simulator%5Csrc%5Cphysics_module%5Csolver.py;0;4
 FILE_NAME_9=0;None;0;ECP1252;0;1;0;C%3A%5CUsers%5Cteobo%5COneDrive%5CDocuments%5Cabc.wall;0;4
+FILE_NAME_10=66;Markdown;0;EUTF-8;0;1;0;Y%3A%5CDocuments%5CCode%5Cwall-insulation-simulator%5CTODO.md;0;4
 
 [build-menu]
 EX_00_LB=_Execute
