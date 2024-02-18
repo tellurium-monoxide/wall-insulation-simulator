@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-
+import pickle
 
 
 from .materials import Material
@@ -92,8 +92,29 @@ class WallConfigData:
 
 
 
-    def write_congif_to_file(self, filepath):
-        print("writing")
+    def write_to_file(self, pathname, file):
+        print("Writing config to %s" % pathname)
+        # for name, mat in self.materials.items():
+            # line="material,"+name+","
+            # line+=str(mat.la)+","
+            # line+=str(mat.rho)+","
+            # line+=str(mat.Cp)+"\n"
+            # file.write(line)
+        # for name, preset in self.presets.items():
+            # line="preset,"+name+","
+            # for layer in preset:
+                # line+=str(layer.e)+","
+                # line+=str(layer.mat.name)+","
+            # line=line[:-1]
+            # line+="\n"
+            # file.write(line)
+        pickle.dump(self,file, protocol=pickle.DEFAULT_PROTOCOL)
+    def load_from_file(self, pathname, file):
+        print("Loading config from %s" % pathname)
+        # lines=file.readlines()
+        config=pickle.load(file)
+        self.materials=config.materials
+        self.presets=config.presets
 
 DefaultConfig=WallConfigData()
 

@@ -436,6 +436,7 @@ class PanelLayerMgr(wx.Panel):
         self.button_add.Bind(wx.EVT_BUTTON, self.on_press_add_layer)
         self.button_remove.Bind(wx.EVT_BUTTON, self.on_press_remove_layer)
         self.button_load.Bind(wx.EVT_BUTTON, self.on_press_load_scenario)
+        self.button_save.Bind(wx.EVT_BUTTON, self.on_press_save_scenario)
         self.button_create_material.Bind(wx.EVT_BUTTON, self.on_press_button_create_material)
 
 
@@ -475,6 +476,19 @@ class PanelLayerMgr(wx.Panel):
             self.button_remove.Disable()
             self.send_layers(self.panel_layer_list.gather_layers())
 
+    def on_press_save_scenario(self,event):
+        preset_name=self.ctrl_save_name.GetValue()
+        if len(preset_name)==0:
+            preset_name=self.choice_scenario.GetStrings()[self.choice_scenario.GetSelection()]
+        if preset_name in self.solver.wall.config.get_preset_list():
+            error_dialog=wx.MessageDialog(self, "Name taken, do you want to overwrite it?", style=wx.YES_NO | wx.ICON_WARNING)
+            answer=error_dialog.ShowModal()
+            if answer==wx.ID_NO:
+                return
+        layers=self.panel_layer_list.gather_layers()
+        named_layers=[(l.e, l.mat.name) for l in layers]
+        self.solver.wall.config.add_preset_wall(preset_name, named_layers)
+        self.update_after_config_change()
 
     def send_layers(self, layers):
         # layers=self.panel_layer_list.gather_layers()
@@ -499,6 +513,9 @@ class PanelLayerMgr(wx.Panel):
         self.load_preset()
 
 
+
+
+
     def load_preset(self):
         sel=self.choice_scenario.GetSelection()
         if (self.is_frozen):
@@ -518,6 +535,9 @@ class PanelLayerMgr(wx.Panel):
 
 
     def on_wall_config_change(self,event):
+        self.update_after_config_change()
+
+    def update_after_config_change(self):
         iselect=self.choice_scenario.GetSelection()
         preset_name=self.choice_scenario.GetStrings()[iselect]
         try:

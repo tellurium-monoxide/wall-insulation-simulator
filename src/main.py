@@ -373,28 +373,41 @@ class MainPanel(wx.Panel):
 
 class MainFrame(wx.Frame):
     def __init__(self):
-        super().__init__(parent=None, title='solver-simulator', style=wx.DEFAULT_FRAME_STYLE)
+        super().__init__(parent=None, title='wall-simulator', style=wx.DEFAULT_FRAME_STYLE)
 
         self.localizer=Localizer()
         self.localizer.set_lang("fr")
         menubar = wx.MenuBar()
+
+
         menu_file=wx.Menu()
+        self.menu_item_save=menu_file.Append(-1, "Save config", '')
+        self.menu_item_load=menu_file.Append(-1, "Load config", '')
+
+        menu_file.Bind(wx.EVT_MENU,  self.on_file_menu)
+
+
+        menubar.Append(menu_file, 'File')
+        self.contentSaved=False
+
+
+
+
         menu_lang=wx.Menu()
-
-
-
         for lang in self.localizer.langs:
             menu_lang.Append(-1, lang.upper(), '')
 
         menu_lang.Bind(wx.EVT_MENU,  self.on_lang_change)
-
-
-
-        # ~ menu_edit.AppendSubMenu(menu_lang, 'Lang')
-
-        menubar.Append(menu_file, 'File')
-
         menubar.Append(menu_lang, 'Language')
+
+
+
+        menu_help=wx.Menu()
+        self.menu_item_help=menu_help.Append(-1, "Help", '')
+        self.menu_item_website=menu_help.Append(-1, "Website", '')
+        self.menu_item_about=menu_help.Append(-1, "About", '')
+
+        menubar.Append(menu_help, 'Help')
 
         self.SetMenuBar(menubar)
 
@@ -422,6 +435,59 @@ class MainFrame(wx.Frame):
     def on_lang_change(self,event):
         self.localizer.set_lang(event.GetEventObject().FindItemById(event.GetId()).GetItemLabel().lower())
         self.Layout()
+
+
+    def on_file_menu(self,event):
+        eventId=event.GetId()
+        if eventId==self.menu_item_save.GetId():
+            self.menu_action_save()
+        if eventId==self.menu_item_load.GetId():
+            self.menu_action_load()
+        # print(event.GetEventObject().FindItemById(event.GetId()).GetItemLabel())
+        # print(event.GetId())
+        # print(self.menu_item_save.GetId())
+
+
+    def menu_action_save(self):
+        with wx.FileDialog(self, "Save WallConfig file", wildcard="WALLCONFIG files (*.wall)|*.wall",
+                       style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT) as fileDialog:
+
+            if fileDialog.ShowModal() == wx.ID_CANCEL:
+                return     # the user changed their mind
+
+            # save the current contents in the file
+            pathname = fileDialog.GetPath()
+            try:
+                with open(pathname, 'wb') as file:
+                    self.main_panel.solver.wall.config.write_to_file(pathname, file)
+            except IOError:
+                wx.LogError("Cannot save current data in file '%s'." % pathname)
+            else:
+                self.contentSaved=True
+
+    def menu_action_load(self):
+        if not(self.contentSaved):
+            if wx.MessageBox("Current content has not been saved! Proceed?", "Please confirm",
+                             wx.ICON_QUESTION | wx.YES_NO, self) == wx.NO:
+                return
+
+        # otherwise ask the user what new file to open
+        with wx.FileDialog(self, "Open WallConfig file", wildcard="WALLCONFIG files (*.wall)|*.wall",
+                           style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST) as fileDialog:
+
+            if fileDialog.ShowModal() == wx.ID_CANCEL:
+                return     # the user changed their mind
+
+            # Proceed loading the file chosen by the user
+            pathname = fileDialog.GetPath()
+            try:
+                with open(pathname, 'rb') as file:
+                    self.main_panel.solver.wall.config.load_from_file(pathname, file)
+            except IOError:
+                wx.LogError("Cannot open file '%s'." % newfile)
+            else:
+                self.main_panel.layermgr.update_after_config_change()
+                self.contentSaved=True
 
 if __name__ == '__main__':
     app = wx.App()
