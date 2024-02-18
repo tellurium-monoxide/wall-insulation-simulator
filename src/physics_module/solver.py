@@ -13,21 +13,13 @@ from matplotlib.figure import Figure
 
 
 
+from .layers import Layer
 from .materials import Material
 from .layered_wall import Wall
 
 
 NPOINT_PREFERRED_PER_LAYER=20
 NPOINT_MINIMAL_PER_LAYER=10
-
-
-class Layer:
-    def __init__(self,e = 1, mat=Material()):
-        self.e=e
-        self.mat=mat
-
-        self.Rth = e / mat.la
-
 
 
 
@@ -71,6 +63,9 @@ class SolverHeatEquation1dMultilayer:
 
         self.Tmin=-10
         self.Tmax=40
+
+        self.text_inside=""
+        self.text_inside=""
 
 
     def remesh(self):
@@ -138,6 +133,11 @@ class SolverHeatEquation1dMultilayer:
         return format_time(self.dt)
 
 
+    def set_text_inside(self, text):
+        self.text_inside=text
+    def set_text_outside(self, text):
+        self.text_outside=text
+
     def draw(self):
         self.ax.clear()
 
@@ -166,10 +166,10 @@ class SolverHeatEquation1dMultilayer:
             self.ax.text(-hspace,T+0.1,"%d" %(T), color="lightgrey", fontsize=9)
             self.ax.text(wl+hspace,T+0.1,"%d" %(T), color="lightgrey", fontsize=9,horizontalalignment='right')
 
-        self.ax.text(-hspace,layer_name_height,"Room")
+        self.ax.text(-hspace,layer_name_height,self.text_inside)
 
 
-        self.ax.text(wl,layer_name_height,"Outside")
+        self.ax.text(wl,layer_name_height,self.text_inside)
 
 
         self.ax.plot([-hspace,0],[self.Tint,self.Tint],color="r")

@@ -7,13 +7,14 @@ from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg
 from threading import Thread
 import time
 import copy
+from functools import partial
 
 # local imports
 from physics_module.solver import Layer, Material
 from physics_module.solver import SolverHeatEquation1dMultilayer as Solver
 # ~ from physics_module.materials import Material, DefaultMaterials
 
-from localizer.localizer import Localizer
+from localizer.mylocalizer import MyLocalizer
 
 # interface imports
 
@@ -80,10 +81,14 @@ class PanelTempControl(wx.Panel):
 
 
 
-class PanelsolverInfo(wx.Panel):
-    def __init__(self, parent, localizer=Localizer()):
+class PanelSolverInfo(wx.Panel):
+    def __init__(self, parent):
         wx.Panel.__init__(self, parent)
-        self.localizer=localizer
+
+        self.parent=parent
+        self.solver=parent.solver
+        self.localizer=parent.localizer
+
         self.sizer_v = wx.BoxSizer(wx.VERTICAL)
 
         self.info_time=wx.StaticText(self,label="")
@@ -127,30 +132,21 @@ class PanelsolverInfo(wx.Panel):
         self.Thaw()
 
 class MainPanel(wx.Panel):
-    def __init__(self,parent,localizer=Localizer()):
+    def __init__(self,parent):
         wx.Panel.__init__(self,parent)
         self.parent=parent
-        self.localizer=localizer
-        solver=Solver()
-
-        dt=1
-        solver.set_time_step(dt)
+        self.localizer=parent.localizer
+        self.solver=Solver()
 
 
-        solver.set_inside_temp(19)
-        solver.set_outside_temp(5)
+        self.solver.set_inside_temp(19)
+        self.solver.set_outside_temp(5)
 
 
-        solver.draw()
-
-        self.solver=solver
-
-        # ~ parent.status_bar.SetStatusText("a")
-
+        self.localizer.link(self.solver.set_text_inside, "plot_text_inside", "plot_text_inside")
+        self.localizer.link(self.solver.set_text_inside, "plot_text_outside", "plot_text_outside")
 
         self.run_sim=False
-
-
 
         # main vertical sizer
         self.sizer_v = wx.BoxSizer(wx.VERTICAL)
@@ -206,12 +202,14 @@ class MainPanel(wx.Panel):
 
 
         self.panel_fig_sliders=wx.Panel(self)
+        self.panel_fig_sliders.solver=self.solver
+        self.panel_fig_sliders.localizer=self.localizer
 
         self.slider_Tint=wx.Slider(self.panel_fig_sliders,value=self.solver.Tint,minValue=self.solver.Tmin, maxValue=self.solver.Tmax, style=wx.SL_VALUE_LABEL | wx.SL_VERTICAL | wx.SL_INVERSE| wx.SL_AUTOTICKS, name="Tint")
         self.panelfig = PanelAnimatedFigure(self.panel_fig_sliders, self.solver.figure)
         self.slider_Tout=wx.Slider(self.panel_fig_sliders,value=self.solver.Tout,minValue=self.solver.Tmin, maxValue=self.solver.Tmax, style=wx.SL_VALUE_LABEL | wx.SL_VERTICAL | wx.SL_LEFT | wx.SL_INVERSE| wx.SL_AUTOTICKS, name="Tout")
 
-        self.panel_info=PanelsolverInfo(self.panel_fig_sliders, self.localizer)
+        self.panel_info=PanelSolverInfo(self.panel_fig_sliders)
         self.panel_info.update_info(self.solver)
 
         # create a FlexGridSizer to position the figure, sliders...
@@ -375,19 +373,24 @@ class MainFrame(wx.Frame):
     def __init__(self):
         super().__init__(parent=None, title='wall-simulator', style=wx.DEFAULT_FRAME_STYLE)
 
-        self.localizer=Localizer()
-        self.localizer.set_lang("fr")
+        self.localizer=MyLocalizer()
+
         menubar = wx.MenuBar()
 
 
         menu_file=wx.Menu()
+
+
         self.menu_item_save=menu_file.Append(-1, "Save config", '')
+        self.localizer.link(self.menu_item_save.SetItemLabel, "menu_file_save", "menu_file_save")
         self.menu_item_load=menu_file.Append(-1, "Load config", '')
+        self.localizer.link(self.menu_item_load.SetItemLabel, "menu_file_load", "menu_file_load")
 
         menu_file.Bind(wx.EVT_MENU,  self.on_file_menu)
 
 
         menubar.Append(menu_file, 'File')
+
         self.contentSaved=False
 
 
@@ -409,11 +412,15 @@ class MainFrame(wx.Frame):
 
         menubar.Append(menu_help, 'Help')
 
+
+        self.localizer.link(partial(menubar.SetMenuLabel,0), "menu_file", "menu_file")
+        self.localizer.link(partial(menubar.SetMenuLabel,1), "menu_lang", "menu_lang")
+        self.localizer.link(partial(menubar.SetMenuLabel,2), "menu_help", "menu_help")
         self.SetMenuBar(menubar)
 
 
 
-        self.main_panel=MainPanel(self, localizer=self.localizer)
+        self.main_panel=MainPanel(self)
 
         self.sizer_v = wx.BoxSizer(wx.VERTICAL)
 
@@ -434,6 +441,7 @@ class MainFrame(wx.Frame):
 
     def on_lang_change(self,event):
         self.localizer.set_lang(event.GetEventObject().FindItemById(event.GetId()).GetItemLabel().lower())
+        self.main_panel.redraw()
         self.Layout()
 
 
