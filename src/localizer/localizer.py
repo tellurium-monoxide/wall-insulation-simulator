@@ -57,14 +57,20 @@ class Localizer:
         self.texts["en"]["button_save_tooltip"]="Does nothing yet."
         self.texts["fr"]["button_save_tooltip"]="Ne fait rien pour l'instant."
 
-        self.texts["en"]["button_create_mat"]="Create"
-        self.texts["fr"]["button_create_mat"]="Créer"
+        self.texts["en"]["button_save_mat"]="Save"
+        self.texts["fr"]["button_save_mat"]="Enregistrer"
 
-        self.texts["en"]["button_create_mat_tooltip"]="Does nothing yet."
-        self.texts["fr"]["button_create_mat_tooltip"]="Ne fait rien pour l'instant."
+        self.texts["en"]["button_save_mat_tooltip"]="Does nothing yet."
+        self.texts["fr"]["button_save_mat_tooltip"]="Ne fait rien pour l'instant."
 
-        self.texts["en"]["button_delete_mat"]="X"
-        self.texts["fr"]["button_delete_mat"]="X"
+        self.texts["en"]["button_save_as_mat"]="Save as"
+        self.texts["fr"]["button_save_as_mat"]="Enregistrer sous"
+
+        self.texts["en"]["button_save_as_mat_tooltip"]="Does nothing yet."
+        self.texts["fr"]["button_save_as_mat_tooltip"]="Ne fait rien pour l'instant."
+
+        self.texts["en"]["button_delete_mat"]="Delete"
+        self.texts["fr"]["button_delete_mat"]="Supprimer"
 
         self.texts["en"]["button_delete_mat_tooltip"]="Does nothing yet."
         self.texts["fr"]["button_delete_mat_tooltip"]="Ne fait rien pour l'instant."

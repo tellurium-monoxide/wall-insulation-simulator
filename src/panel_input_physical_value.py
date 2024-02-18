@@ -9,9 +9,7 @@ import time
 import copy
 
 # local imports
-from physics_module.solver import Layer, DefaultScenarios, Material, DefaultMaterials
-from physics_module.solver import SolverHeatEquation1dMultilayer as Solver
-# ~ from physics_module.materials import Material, DefaultMaterials
+
 
 
 

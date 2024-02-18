@@ -13,8 +13,8 @@ from matplotlib.figure import Figure
 
 
 
-from .materials import Material, DefaultMaterials
-from .layered_wall import Wall, DefaultScenarios
+from .materials import Material
+from .layered_wall import Wall
 
 
 NPOINT_PREFERRED_PER_LAYER=20

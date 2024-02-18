@@ -9,8 +9,8 @@ import time
 import copy
 
 # local imports
-from physics_module.solver import Layer, DefaultScenarios, Material, DefaultMaterials
-from physics_module.solver import SolverHeatEquation1dMultilayer as Solver
+from physics_module.solver import Layer, Material
+# from physics_module.solver import SolverHeatEquation1dMultilayer as Solver
 # ~ from physics_module.materials import Material, DefaultMaterials
 
 from localizer.localizer import Localizer
@@ -51,8 +51,20 @@ class PanelMaterialCreator(wx.Frame):
         self.sizer = wx.BoxSizer(wx.VERTICAL)
 
         sizer_h1=wx.BoxSizer(wx.HORIZONTAL)
-        self.choice_delete = wx.Choice(self, choices=list(self.solver.wall.preset_materials.keys()))
+        self.choice_delete = wx.Choice(self, choices=self.solver.wall.config.get_material_list())
+
         self.choice_delete.SetSelection(0)
+
+
+        self.button_create= wx.Button(self)
+        self.button_create.Bind(wx.EVT_BUTTON, self.on_button_save)
+        self.localizer.link(self.button_create.SetLabel, "button_save_mat", "button_save_mat")
+        self.localizer.link(self.button_create.SetToolTip, "button_save_mat_tooltip", "button_save_mat_tooltip")
+
+        self.button_save_as= wx.Button(self)
+        # self.button_save_as.Bind(wx.EVT_BUTTON, self.on_button_save)
+        self.localizer.link(self.button_save_as.SetLabel, "button_save_as_mat", "button_save_as_mat")
+        self.localizer.link(self.button_save_as.SetToolTip, "button_save_as_mat_tooltip", "button_save_as_mat_tooltip")
 
 
         self.button_delete= wx.Button(self)
@@ -61,20 +73,19 @@ class PanelMaterialCreator(wx.Frame):
         self.localizer.link(self.button_delete.SetToolTip, "button_delete_mat_tooltip", "button_delete_mat_tooltip")
 
         sizer_h1.Add(self.choice_delete,1, wx.ALL | wx.EXPAND,5)
+        sizer_h1.Add(self.button_create,0, wx.ALL,5)
+        sizer_h1.Add(self.button_save_as,0, wx.ALL,5)
         sizer_h1.Add(self.button_delete,0, wx.ALL,5)
 
         self.sizer.Add(sizer_h1,0,wx.EXPAND,0)
 
         sizer_h2=wx.BoxSizer(wx.HORIZONTAL)
 
-        self.button_create= wx.Button(self)
-        self.button_create.Bind(wx.EVT_BUTTON, self.on_button_save)
-        self.localizer.link(self.button_create.SetLabel, "button_create_mat", "button_create_mat")
-        self.localizer.link(self.button_create.SetToolTip, "button_create_mat_tooltip", "button_create_mat_tooltip")
+
 
         self.ctrl_save_name= wx.TextCtrl(self, )
         sizer_h2.Add(self.ctrl_save_name,1, wx.ALL | wx.EXPAND,5)
-        sizer_h2.Add(self.button_create,0, wx.ALL,5)
+
 
         self.sizer.Add(sizer_h2,0,wx.EXPAND,0)
 
@@ -92,10 +103,28 @@ class PanelMaterialCreator(wx.Frame):
         self.sizer.Add(self.input_layer_mat_cp,0,wx.ALL,0)
 
 
+        self.choice_delete.Bind(wx.EVT_CHOICE, self.on_choice_mat)
+        self.on_choice_mat(None)
 
         self.SetSizer(self.sizer)
+        self.sizer.SetSizeHints(self)
         self.Fit()
         self.Show()
+
+
+    def on_choice_mat(self,event):
+        iselect=self.choice_delete.GetSelection()
+        mat_name=self.choice_delete.GetStrings()[iselect]
+
+        mat=self.solver.wall.config.get_material(mat_name)
+        self.set_mat_vals(mat)
+
+    def set_mat_vals(self, mat):
+        self.input_layer_mat_lambda.SetValue(mat.la)
+
+        self.input_layer_mat_rho.SetValue(mat.rho)
+
+        self.input_layer_mat_cp.SetValue(mat.Cp)
 
     def on_button_delete(self, event):
         confirm_dialog=wx.MessageDialog(self, "del", style=wx.OK | wx.CANCEL | wx.CANCEL_DEFAULT | wx.ICON_WARNING)
@@ -103,11 +132,9 @@ class PanelMaterialCreator(wx.Frame):
         answer=confirm_dialog.ShowModal()
         if answer == wx.ID_OK:
             print("ok")
-            name_list=[]
+
             name_to_be_del=self.choice_delete.GetStrings()[self.choice_delete.GetSelection()]
-            for k, w in self.solver.wall.preset_walls.items():
-                if name_to_be_del in [l.mat.name for l in w.layers]:
-                    name_list.append(k)
+            name_list=self.solver.wall.config.get_list_presets_using_material(name_to_be_del)
 
 
             print(name_to_be_del)
@@ -126,9 +153,15 @@ class PanelMaterialCreator(wx.Frame):
                     return
 
             # can remove the mat
-            self.solver.wall.preset_materials.pop(name_to_be_del)
+            removed=self.solver.wall.config.remove_material(name_to_be_del, force_delete=True)
+            if not(remove):
+                inform_dialog=wx.MessageDialog(self, "Material was not deleted, probably because it is used in all existing presets, or it is the only material.", style=wx.OK)
+
+                answer=inform_dialog.ShowModal()
+
             event = eventWallMaterialListChanged(wx.NewIdRef())
             wx.PostEvent(self, event)
+            self.Close()
 
         elif answer == wx.CANCEL:
             print("cancel material deletion")
@@ -140,26 +173,27 @@ class PanelMaterialCreator(wx.Frame):
         Cp=self.input_layer_mat_cp.GetValue()
 
         name=self.ctrl_save_name.GetValue()
-        if len(name)==0:
-            error_dialog=wx.MessageDialog(self, "Must have a name", style=wx.OK | wx.ICON_WARNING)
-            answer=error_dialog.ShowModal()
-            self.ctrl_save_name.SetFocus()
+        if len(name)==0: # takes name from choice above as we assume the goal is to overwrite it
+            # error_dialog=wx.MessageDialog(self, "Must have a name", style=wx.OK | wx.ICON_WARNING)
+            # answer=error_dialog.ShowModal()
+            # self.ctrl_save_name.SetFocus()
             # self.ctrl_save_name.SetBackground()
-        else:
-            if name in list(self.solver.wall.preset_materials.keys()):
-                error_dialog=wx.MessageDialog(self, "Name taken, do you want to overwrite it?", style=wx.YES_NO | wx.ICON_WARNING)
-                answer=error_dialog.ShowModal()
-                if answer==wx.ID_YES:
-                    print("overwrite")
-                elif answer==wx.ID_NO:
-                    print("cancel")
-                    self.ctrl_save_name.SetFocus()
-                    return
-            # material can then be created, and event is emitted
-            self.solver.wall.preset_materials[name] = Material(la=la, rho=rho, Cp=Cp, name=name)
-            event = eventWallMaterialListChanged(wx.NewIdRef())
-            wx.PostEvent(self, event)
-            self.Close()
+            name=self.choice_delete.GetStrings()[self.choice_delete.GetSelection()]
+        # else:
+        if name in self.solver.wall.config.get_material_list():
+            error_dialog=wx.MessageDialog(self, "Name taken, do you want to overwrite it?", style=wx.YES_NO | wx.ICON_WARNING)
+            answer=error_dialog.ShowModal()
+            if answer==wx.ID_YES:
+                print("overwrite")
+            elif answer==wx.ID_NO:
+                print("cancel")
+                self.ctrl_save_name.SetFocus()
+                return
+        # material can then be created, and event is emitted
+        self.solver.wall.config.add_material( Material(la=la, rho=rho, Cp=Cp, name=name))
+        event = eventWallMaterialListChanged(wx.NewIdRef())
+        wx.PostEvent(self, event)
+        self.Close()
 
 
 
@@ -181,7 +215,7 @@ class PanelLayer(wx.Panel):
 
 
 
-        self.typechoice= wx.Choice(self,choices=list(self.solver.wall.preset_materials.keys()))
+        self.typechoice= wx.Choice(self,choices=self.solver.wall.config.get_material_list())
         self.typechoice.SetSelection(0)
         self.typechoice.Bind(wx.EVT_CHOICE, self.on_choice_mat)
         self.sizer.Add(self.typechoice, 0, wx.ALL | wx.EXPAND , 3)
@@ -207,17 +241,18 @@ class PanelLayer(wx.Panel):
 
     def on_choice_mat(self,event):
         iselect=self.typechoice.GetSelection()
-        mat_name=list(self.solver.wall.preset_materials.keys())[iselect]
+        mat_name=self.typechoice.GetStrings()[iselect]
 
-        mat=self.solver.wall.preset_materials[mat_name]
+        mat=self.solver.wall.config.get_material(mat_name)
+        self.set_mat_vals(mat)
+        self.disable_mat_input()
+
+    def set_mat_vals(self, mat):
         self.input_layer_mat_lambda.SetValue(mat.la)
 
         self.input_layer_mat_rho.SetValue(mat.rho)
 
         self.input_layer_mat_cp.SetValue(mat.Cp)
-        self.disable_mat_input()
-
-
 
     def disable_mat_input(self):
         self.input_layer_mat_lambda.Disable()
@@ -230,9 +265,9 @@ class PanelLayer(wx.Panel):
         Cp=self.input_layer_mat_cp.GetValue()
 
         iselect=self.typechoice.GetSelection()
-        mat_name=list(self.solver.wall.preset_materials.keys())[iselect]
+        mat_name=self.typechoice.GetStrings()[iselect]
 
-        mat=Material(la=la, rho=rho, Cp=Cp, name=mat_name)
+        mat=self.solver.wall.config.get_material(mat_name)
 
         e=self.input_layer_width.GetValue()
 
@@ -241,7 +276,7 @@ class PanelLayer(wx.Panel):
 
     def set_layer(self, layer):
         try:
-            mat_id=list(self.solver.wall.preset_materials.keys()).index(layer.mat.name)
+            mat_id=self.solver.wall.config.get_material_list().index(layer.mat.name)
         except ValueError:
             print("Trying to set layer with unregistered name")
             mat_id=0
@@ -256,10 +291,18 @@ class PanelLayer(wx.Panel):
     def update_material_names(self):
         iselect=self.typechoice.GetSelection()
         mat_name=self.typechoice.GetStrings()[iselect]
-        mat_new_id=list(self.solver.wall.preset_materials.keys()).index(mat_name)
+        try:
+            mat_new_id=self.solver.wall.config.get_material_list().index(mat_name)
+        except ValueError:
+            mat_new_id=0
+            mat_name=self.solver.wall.config.get_material_list()[0]
+        # else:
         # print(self.typechoice.GetStrings())
-        self.typechoice.SetItems( list(self.solver.wall.preset_materials.keys()) )
+        self.typechoice.SetItems( self.solver.wall.config.get_material_list() )
         self.typechoice.SetSelection(mat_new_id)
+        mat=self.solver.wall.config.get_material(mat_name)
+        self.set_mat_vals(mat)
+
 
 
 class PanelLayerList(wx.Panel):
@@ -317,11 +360,13 @@ class PanelLayerList(wx.Panel):
             self.add_layer()
 
     def load_layers(self,layers):
-        self.Freeze()
+        # self.Freeze()
         self.set_layer_amount(len(layers))
         for i in range(len(layers)):
             self.list_of_panel_layer[i].set_layer(layers[i])
-        self.Thaw()
+        self.Layout()
+        self.Fit()
+        # self.Thaw()
 
 
 class PanelLayerMgr(wx.Panel):
@@ -352,7 +397,7 @@ class PanelLayerMgr(wx.Panel):
 
 
 
-        self.choice_scenario= wx.Choice(self,choices=list(self.solver.wall.preset_walls.keys()))
+        self.choice_scenario= wx.Choice(self,choices=self.solver.wall.config.get_preset_list())
         self.choice_scenario.SetSelection(0)
 
         self.button_save= wx.Button(self)
@@ -398,7 +443,7 @@ class PanelLayerMgr(wx.Panel):
         self.SetSizer(self.sizer_v)
 
 
-        self.Bind(EVT_WALL_MATERIALS_CHANGED, self.on_material_list_change)
+        self.Bind(EVT_WALL_MATERIALS_CHANGED, self.on_wall_config_change)
 
         self.Fit()
 
@@ -451,22 +496,42 @@ class PanelLayerMgr(wx.Panel):
             self.button_remove.Disable()
 
     def on_press_load_scenario(self,event):
+        self.load_preset()
+
+
+    def load_preset(self):
         sel=self.choice_scenario.GetSelection()
         if (self.is_frozen):
                 self.toggle_edit(set_custom=False)
 
         preset_name=self.choice_scenario.GetStrings()[sel]
-        preset_wall=self.solver.wall.preset_walls[preset_name]
-        self.panel_layer_list.load_layers(preset_wall.layers)
-        self.send_layers(preset_wall.layers)
+        preset_wall=self.solver.wall.config.get_preset(preset_name)
+        print("Loading preset :", preset_name, "with layers:")
+        for layer in preset_wall:
+            print("- ",layer.e,"m :", layer.mat.name)
+        self.panel_layer_list.load_layers(preset_wall)
+        self.send_layers(preset_wall)
         if not(self.is_frozen):
                 self.toggle_edit(set_custom=False)
         if len(self.panel_layer_list.list_of_panel_layer)==1:
             self.button_remove.Disable()
 
 
-    def on_material_list_change(self,event):
+    def on_wall_config_change(self,event):
+        iselect=self.choice_scenario.GetSelection()
+        preset_name=self.choice_scenario.GetStrings()[iselect]
+        try:
+            preset_new_id=self.solver.wall.config.get_preset_list().index(preset_name)
+        except ValueError:
+            preset_new_id=0
+        # print(self.typechoice.GetStrings())
+        self.choice_scenario.SetItems( self.solver.wall.config.get_preset_list() )
+        self.choice_scenario.SetSelection(preset_new_id)
         for panel in self.panel_layer_list.list_of_panel_layer:
             panel.update_material_names()
+        self.load_preset()
+
+
+
 
 

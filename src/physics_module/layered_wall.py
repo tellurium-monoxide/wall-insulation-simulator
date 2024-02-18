@@ -4,25 +4,11 @@
 
 
 from .layers import Layer
-from .materials import Material, DefaultMaterials
+from .materials import Material
+from .presets import WallConfigData, DefaultConfig
 
 
-class WallScenario:
-    def __init__(self,name,  layers):
-        self.name=name
-        self.layers=[]
-        for named_layer in layers:
-            layer=Layer (named_layer[0], DefaultMaterials[named_layer[1]])
-            self.layers.append(layer)
-
-
-DefaultScenarios={}
-def register_scenario(scenario):
-    DefaultScenarios[scenario.name]=scenario
-
-
-register_scenario(WallScenario("Isolation intérieur laine de bois", [(0.15, "Laine de bois"), (0.4, "Béton")]))
-register_scenario(WallScenario("Isolation intérieur laine de bois + BA13", [(0.013, "BA13"),(0.15, "Laine de bois"), (0.4, "Béton")]))
+from copy import deepcopy
 
 
 
@@ -35,11 +21,10 @@ class Wall:
 
         self.length=0
 
-        self.preset_materials=DefaultMaterials
-        self.preset_walls=DefaultScenarios
+        self.config=DefaultConfig
 
-        self.layers=DefaultScenarios[list(DefaultScenarios.keys())[0]].layers
 
+        self.layers=deepcopy(self.config.get_default_preset())
 
         self.compute_length()
 
