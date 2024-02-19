@@ -131,6 +131,7 @@ DefaultConfig.add_material(Material(la=2,Cp=840, rho=2200, name="Béton"))
 
 
 DefaultConfig.add_preset_wall("Isolation intérieur laine de bois", [(0.15, "Laine de bois"), (0.4, "Béton")])
+DefaultConfig.add_preset_wall("Isolation intérieur laine de verre", [(0.15, "Laine de verre"), (0.4, "Béton")])
 DefaultConfig.add_preset_wall("Isolation intérieur laine de bois + BA13", [(0.013, "BA13"),(0.15, "Laine de bois"), (0.4, "Béton")])
 DefaultConfig.add_preset_wall("Béton seul", [(0.4, "Béton")])
 

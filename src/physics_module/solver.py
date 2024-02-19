@@ -12,6 +12,9 @@ import matplotlib.backends.backend_wxagg
 from matplotlib.figure import Figure
 
 
+import matplotlib.cm
+import matplotlib.colors as mplcolors
+
 
 from .layers import Layer
 from .materials import Material
@@ -64,6 +67,8 @@ class SolverHeatEquation1dMultilayer:
         self.Tmin=-10
         self.Tmax=40
 
+        self.vmaxabs=0
+
         self.text_inside=""
         self.text_inside=""
 
@@ -90,6 +95,7 @@ class SolverHeatEquation1dMultilayer:
         if len(self.wall.layers)>0:
             self.time_to_statio=max([layer.e**2/layer.mat.D for layer in self.wall.layers])
             self.steps_to_statio = self.time_to_statio/self.dt
+        self.vmaxabs=0
 
 
     def add_layer(self, layer):
@@ -175,8 +181,38 @@ class SolverHeatEquation1dMultilayer:
         self.ax.plot([-hspace,0],[self.Tint,self.Tint],color="r")
         self.ax.plot([wl,wl+hspace],[self.Tout,self.Tout],color="cyan")
 
+
+        vmin=np.inf
+        vmax=-np.inf
+        vmaxabs=0
         for i in range(len(self.wall.layers)):
-            self.ax.plot(self.wall.layers[i].xmesh,self.wall.layers[i].Tmesh)
+            layer=self.wall.layers[i]
+            T=layer.Tmesh
+            grad=np.zeros(layer.Npoints)
+            grad[1:-1]= (T[1:-1]-T[0:-2])/layer.dx
+            grad[0]=(T[1]-T[0])/layer.dx
+            grad[-1]=(T[-1]-T[-2])/layer.dx
+            flux=layer.mat.la * grad
+            self.wall.layers[i].flux=flux
+            vmax=max(vmax, max(flux))
+            vmin=min(vmin, min(flux))
+            vmaxabs=max(vmaxabs, max(abs(flux)))
+        
+        self.vmaxabs=max(vmaxabs, self.vmaxabs)
+        vmin-=0.0001
+        vmax+=0.0001
+
+        for i in range(len(self.wall.layers)):
+            layer=self.wall.layers[i]
+            x=layer.xmesh
+            T=layer.Tmesh
+            flux=layer.flux
+            r=flux/(abs(flux)+0.00001)*(abs(flux)/(self.vmaxabs+0.00001))**(1/5)
+            norm=mplcolors.Normalize(vmin=-1, vmax=1)
+            
+            # print(r)
+            cmap=matplotlib.cm.get_cmap("coolwarm")
+            self.ax.scatter(x,T, color=cmap(norm(r)))
 
 #        self.ax.set_xlabel("Position (m)")
         self.ax.axes.get_xaxis().set_visible(False)

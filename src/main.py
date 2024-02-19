@@ -1,5 +1,4 @@
 import wx
-from wx.lib.masked import NumCtrl
 import wx.lib.scrolledpanel as scrolled
 import matplotlib.backends.backend_wxagg
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg
@@ -220,7 +219,7 @@ class MainPanel(wx.Panel):
 
         # add content to the sizer
         sizer_h_fig_sliders.Add(wx.StaticText(self.panel_fig_sliders,label="Tint (°C)"),1, wx.ALIGN_CENTER_HORIZONTAL)
-        sizer_h_fig_sliders.Add(wx.StaticText(self.panel_fig_sliders,label="Temperature in the solver") ,1, wx.ALIGN_CENTER_HORIZONTAL)
+        sizer_h_fig_sliders.Add(wx.StaticText(self.panel_fig_sliders,label="Temperature in the wall") ,1, wx.ALIGN_CENTER_HORIZONTAL)
         sizer_h_fig_sliders.Add(wx.StaticText(self.panel_fig_sliders,label="Text (°C)"),1, wx.ALIGN_CENTER_HORIZONTAL)
         sizer_h_fig_sliders.Add(wx.StaticText(self.panel_fig_sliders,label="Info"), 0,0)
         sizer_h_fig_sliders.Add(self.slider_Tint, 0,wx.EXPAND)
