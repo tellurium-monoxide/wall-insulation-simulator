@@ -5,12 +5,10 @@
 This software is an interactive pedagogic tool whose main goal is to illustrate how heat passes through a wall.
 It aims to illustrate the concepts of "thermal resistance", which quantify the amount of heat that moves from one side of the wall to the other, and "thermal inertia", which is the time a temperature change on one side takes before it is felt on the other side.
 
-It results from a personnal project where I aimed to get a first experience creating a software while also creating something potentially useful to people I know.
+It is the result of a personal project where I aimed to get a first experience creating a software while also creating something potentially useful to people I know. The idea for it arised when I tried to explain how thermal inertia can change between two material with the same conductivity. I am not certain it achieves this goal, but it still gives some insights into how heat can cross through a wall.
 
 
 In the following sections, I describe the main tools offered by this program and try to provide a basic tutorial.
-
-
 
 ## License
 
