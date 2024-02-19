@@ -62,7 +62,7 @@ class PanelMaterialCreator(wx.Frame):
         self.localizer.link(self.button_create.SetToolTip, "button_save_mat_tooltip", "button_save_mat_tooltip")
 
         self.button_save_as= wx.Button(self)
-        # self.button_save_as.Bind(wx.EVT_BUTTON, self.on_button_save)
+        self.button_save_as.Bind(wx.EVT_BUTTON, self.on_button_save_as)
         self.localizer.link(self.button_save_as.SetLabel, "button_save_as_mat", "button_save_as_mat")
         self.localizer.link(self.button_save_as.SetToolTip, "button_save_as_mat_tooltip", "button_save_as_mat_tooltip")
 
@@ -74,7 +74,7 @@ class PanelMaterialCreator(wx.Frame):
 
         sizer_h1.Add(self.choice_delete,1, wx.ALL | wx.EXPAND,5)
         sizer_h1.Add(self.button_create,0, wx.ALL,5)
-        sizer_h1.Add(self.button_save_as,0, wx.ALL,5)
+
         sizer_h1.Add(self.button_delete,0, wx.ALL,5)
 
         self.sizer.Add(sizer_h1,0,wx.EXPAND,0)
@@ -85,7 +85,7 @@ class PanelMaterialCreator(wx.Frame):
 
         self.ctrl_save_name= wx.TextCtrl(self, )
         sizer_h2.Add(self.ctrl_save_name,1, wx.ALL | wx.EXPAND,5)
-
+        sizer_h2.Add(self.button_save_as,0, wx.ALL,5)
 
         self.sizer.Add(sizer_h2,0,wx.EXPAND,0)
 
@@ -154,7 +154,7 @@ class PanelMaterialCreator(wx.Frame):
 
             # can remove the mat
             removed=self.solver.wall.config.remove_material(name_to_be_del, force_delete=True)
-            if not(remove):
+            if not(removed):
                 inform_dialog=wx.MessageDialog(self, "Material was not deleted, probably because it is used in all existing presets, or it is the only material.", style=wx.OK)
 
                 answer=inform_dialog.ShowModal()
@@ -172,13 +172,13 @@ class PanelMaterialCreator(wx.Frame):
         rho=self.input_layer_mat_rho.GetValue()
         Cp=self.input_layer_mat_cp.GetValue()
 
-        name=self.ctrl_save_name.GetValue()
-        if len(name)==0: # takes name from choice above as we assume the goal is to overwrite it
+        # name=self.ctrl_save_name.GetValue()
+        # if len(name)==0: # takes name from choice above as we assume the goal is to overwrite it
             # error_dialog=wx.MessageDialog(self, "Must have a name", style=wx.OK | wx.ICON_WARNING)
             # answer=error_dialog.ShowModal()
             # self.ctrl_save_name.SetFocus()
             # self.ctrl_save_name.SetBackground()
-            name=self.choice_delete.GetStrings()[self.choice_delete.GetSelection()]
+        name=self.choice_delete.GetStrings()[self.choice_delete.GetSelection()]
         # else:
         if name in self.solver.wall.config.get_material_list():
             error_dialog=wx.MessageDialog(self, "Name taken, do you want to overwrite it?", style=wx.YES_NO | wx.ICON_WARNING)
@@ -186,7 +186,7 @@ class PanelMaterialCreator(wx.Frame):
             if answer==wx.ID_YES:
                 print("overwrite")
             elif answer==wx.ID_NO:
-                print("cancel")
+                # print("cancel")
                 self.ctrl_save_name.SetFocus()
                 return
         # material can then be created, and event is emitted
@@ -195,7 +195,30 @@ class PanelMaterialCreator(wx.Frame):
         wx.PostEvent(self, event)
         self.Close()
 
-
+    def on_button_save_as(self, event):
+        name=self.ctrl_save_name.GetValue()
+        if len(name)==0: # takes name from choice above as we assume the goal is to overwrite it
+            error_dialog=wx.MessageDialog(self, "Must have a name", style=wx.OK | wx.ICON_WARNING)
+            answer=error_dialog.ShowModal()
+            self.ctrl_save_name.SetFocus()
+            # self.ctrl_save_name.SetBackground()
+            return
+        if name in self.solver.wall.config.get_material_list():
+            error_dialog=wx.MessageDialog(self, "Name taken, do you want to overwrite it?", style=wx.YES_NO | wx.ICON_WARNING)
+            answer=error_dialog.ShowModal()
+            if answer==wx.ID_YES:
+                print("overwrite")
+            elif answer==wx.ID_NO:
+                # print("cancel")
+                self.ctrl_save_name.SetFocus()
+                return
+        la=self.input_layer_mat_lambda.GetValue()
+        rho=self.input_layer_mat_rho.GetValue()
+        Cp=self.input_layer_mat_cp.GetValue()
+        self.solver.wall.config.add_material( Material(la=la, rho=rho, Cp=Cp, name=name))
+        event = eventWallMaterialListChanged(wx.NewIdRef())
+        wx.PostEvent(self, event)
+        self.Close()
 
 class PanelLayer(wx.Panel):
     def __init__(self, parent):
@@ -210,7 +233,7 @@ class PanelLayer(wx.Panel):
 
 
 
-        self.input_layer_width=PanelNumericInput(self,name="e", unit="mm", unit_scale=1000, fractionWidth = 0)
+        self.input_layer_width=PanelNumericInput(self,name="e", unit="cm", unit_scale=100, min_value=1, max_value=100, def_val=10)
         self.sizer.Add(self.input_layer_width,0,wx.EXPAND,0)
 
 

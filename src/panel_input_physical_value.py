@@ -60,6 +60,8 @@ class ValidatorDecimalInputOnly(wx.Validator):
                 textCtrl.ChangeValue(str(self.min_value))
             if val > self.max_value:
                 textCtrl.ChangeValue(str(self.max_value))
+        else:
+            textCtrl.ChangeValue(str(self.previous_text))
         split=entered.split(".")
         # print(split)
         if (len(split)>1 and len(split[1])>self.fraction_width):
@@ -119,7 +121,7 @@ class ValidatorDecimalInputOnly(wx.Validator):
 
 
 class PanelNumericInput(wx.Panel):
-    def __init__(self, parent, name="", def_val=1,integerWidth = 6,fractionWidth = 3, unit="", unit_scale=1):
+    def __init__(self, parent, name="", def_val=1,integerWidth = 6,fractionWidth = 3, unit="", unit_scale=1, min_value=0, max_value=10000):
         wx.Panel.__init__(self, parent)
         self.unit_scale=unit_scale
         self.def_val=def_val
@@ -127,15 +129,17 @@ class PanelNumericInput(wx.Panel):
         self.label=wx.StaticText(self, label=name, style=wx.ALIGN_RIGHT)
         self.eq=wx.StaticText(self, label=" = ",)
 
-        self.num_ctrl = wx.TextCtrl(self, value=str(def_val), validator=ValidatorDecimalInputOnly())
+        validator=ValidatorDecimalInputOnly(min_value=min_value, max_value=max_value)
+
+        self.num_ctrl = wx.TextCtrl(self, value=str(def_val), validator=validator, size=(50, -1))
         self.unit=wx.StaticText(self, label=unit)
 
         self.sizer_h=wx.BoxSizer(wx.HORIZONTAL)
 
-        self.sizer_h.Add(self.label, 1, wx.ALL | wx.ALIGN_CENTER_VERTICAL , 0)
-        self.sizer_h.Add(self.eq, 0, wx.ALL | wx.ALIGN_CENTER_VERTICAL , 0)
-        self.sizer_h.Add(self.num_ctrl, 2, wx.ALL | wx.ALIGN_CENTER_VERTICAL , 0)
-        self.sizer_h.Add(self.unit, 2, wx.LEFT | wx.ALIGN_CENTER_VERTICAL , 5)
+        self.sizer_h.Add(self.label, 1, wx.LEFT | wx.ALIGN_CENTER_VERTICAL , 2)
+        self.sizer_h.Add(self.eq, 0, wx.ALL | wx.ALIGN_CENTER_VERTICAL , 2)
+        self.sizer_h.Add(self.num_ctrl, 0, wx.ALL | wx.ALIGN_CENTER_VERTICAL , 2)
+        self.sizer_h.Add(self.unit, 1, wx.ALL | wx.ALIGN_CENTER_VERTICAL , 2)
 
         self.SetSizer(self.sizer_h)
         self.Fit()

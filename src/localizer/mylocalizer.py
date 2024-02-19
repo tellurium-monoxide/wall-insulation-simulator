@@ -69,14 +69,17 @@ class MyLocalizer(Localizer):
         self.texts["en"]["button_save"]="Save"
         self.texts["fr"]["button_save"]="Enregistrer"
 
-        self.texts["en"]["button_save_tooltip"]="Does nothing yet."
-        self.texts["fr"]["button_save_tooltip"]="Ne fait rien pour l'instant."
+        self.texts["en"]["button_save_tooltip"]="Save the current wall configuration to the list of presets."
+        self.texts["fr"]["button_save_tooltip"]="Enregistre la configuration de mur actuelle avec le nom indiqué ci-contre, ou remplace la configuration actuelle si aucun nom n'est renseigné."
+
+        self.texts["en"]["button_create_material"]="Edit materials"
+        self.texts["fr"]["button_create_material"]="Modifier les matériaux"
 
         self.texts["en"]["button_save_mat"]="Save"
         self.texts["fr"]["button_save_mat"]="Enregistrer"
 
-        self.texts["en"]["button_save_mat_tooltip"]="Does nothing yet."
-        self.texts["fr"]["button_save_mat_tooltip"]="Ne fait rien pour l'instant."
+        self.texts["en"]["button_save_mat_tooltip"]="Save the material."
+        self.texts["fr"]["button_save_mat_tooltip"]="Enregistre le matériau avec les paramètres renseignés ci-dessous."
 
         self.texts["en"]["button_save_as_mat"]="Save as"
         self.texts["fr"]["button_save_as_mat"]="Enregistrer sous"
