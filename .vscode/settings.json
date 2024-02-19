@@ -1,0 +1,12 @@
+{
+    "python.terminal.executeInFileDir": true,
+    "python.terminal.focusAfterLaunch": true,
+    "terminal.explorerKind": "external",
+    "python.terminal.launchArgs": [
+
+    ],
+    "terminal.integrated.accessibleViewFocusOnCommandExecution": false,
+    "workbench.settings.editor": "ui",
+    "accessibility.verbosity.terminal": false,
+    "debug.terminal.clearBeforeReusing": true
+}
