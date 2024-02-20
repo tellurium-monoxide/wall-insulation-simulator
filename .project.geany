@@ -28,11 +28,11 @@ long_line_behaviour=1
 long_line_column=72
 
 [files]
-current_page=5
-FILE_NAME_0=4148;Python;0;EUTF-8;0;1;0;Y%3A%5CDocuments%5CCode%5Cwall-insulation-simulator%5Csrc%5Cmain.py;0;4
+current_page=2
+FILE_NAME_0=6622;Python;0;EUTF-8;0;1;0;Y%3A%5CDocuments%5CCode%5Cwall-insulation-simulator%5Csrc%5Cmain.py;0;4
 FILE_NAME_1=7861;Python;0;EUTF-8;0;1;0;Y%3A%5CDocuments%5CCode%5Cwall-insulation-simulator%5Csrc%5Cmodules%5Cgui%5Cwall_customizer%5Cpanel_wall_customizer.py;0;4
-FILE_NAME_2=13160;Python;0;EUTF-8;0;1;0;Y%3A%5CDocuments%5CCode%5Cwall-insulation-simulator%5Csrc%5Cmodules%5Cphysics%5Csolver.py;0;4
-FILE_NAME_3=4331;Python;0;EUTF-8;0;1;0;Y%3A%5CDocuments%5CCode%5Cwall-insulation-simulator%5Csrc%5Cmodules%5Clocalizer%5Cmylocalizer.py;0;4
+FILE_NAME_2=6823;Python;0;EUTF-8;0;1;0;Y%3A%5CDocuments%5CCode%5Cwall-insulation-simulator%5Csrc%5Cmodules%5Cphysics%5Csolver.py;0;4
+FILE_NAME_3=890;Python;0;EUTF-8;0;1;0;Y%3A%5CDocuments%5CCode%5Cwall-insulation-simulator%5Csrc%5Cmodules%5Clocalizer%5Cmylocalizer.py;0;4
 FILE_NAME_4=1254;Python;0;EUTF-8;0;1;0;Y%3A%5CDocuments%5CCode%5Cwall-insulation-simulator%5Csrc%5Cmodules%5Clocalizer%5Clocalizer.py;0;4
 FILE_NAME_5=240;Python;0;EUTF-8;0;1;0;Y%3A%5CDocuments%5CCode%5Cwall-insulation-simulator%5Csrc%5Cmodules%5Cphysics%5Cpresets.py;0;4
 FILE_NAME_6=348;Python;0;EUTF-8;0;1;0;Y%3A%5CDocuments%5CCode%5Cwall-insulation-simulator%5Csrc%5Cmodules%5Cphysics%5Cmaterials.py;0;4

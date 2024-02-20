@@ -151,7 +151,7 @@ class SolverHeatEquation1dMultilayer:
 
 
             layer.Npoints= NPOINT_PREFERRED_PER_LAYER #* int(layer.e / min_width)
-            layer.Npoints= 5
+            # layer.Npoints= 5
             layer.xmesh=np.linspace(current_length,current_length+layer.e,layer.Npoints)
 
             layer.dx=layer.xmesh[1]-layer.xmesh[0]
@@ -242,11 +242,11 @@ class SolverHeatEquation1dMultilayer:
         self.ax.text(-hspace,layer_name_height,self.text_inside)
 
 
-        self.ax.text(wl,layer_name_height,self.text_inside)
+        self.ax.text(wl,layer_name_height,self.text_outside)
 
 
-        self.ax.plot([-hspace,0],[self.Tint,self.Tint],color="r")
-        self.ax.plot([wl,wl+hspace],[self.Tout,self.Tout],color="cyan")
+        self.ax.plot([-hspace,0],[self.Tint,self.Tint],color="tab:green")
+        self.ax.plot([wl,wl+hspace],[self.Tout,self.Tout],color="tab:green")
 
 
         vmin=np.inf

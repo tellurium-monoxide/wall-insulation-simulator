@@ -185,7 +185,7 @@ class MainPanel(wx.Panel):
 
 
         self.localizer.link(self.solver.set_text_inside, "plot_text_inside", "plot_text_inside")
-        self.localizer.link(self.solver.set_text_inside, "plot_text_outside", "plot_text_outside")
+        self.localizer.link(self.solver.set_text_outside, "plot_text_outside", "plot_text_outside")
 
 
 
