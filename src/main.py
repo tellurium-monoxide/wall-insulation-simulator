@@ -1,5 +1,7 @@
 import wx
 import wx.lib.scrolledpanel as scrolled
+import wx.lib.analogclock as wxclock
+
 import matplotlib.backends.backend_wxagg
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg
 #from matplotlib.backends.backend_wx import NavigationToolbar2Wx
@@ -17,7 +19,7 @@ from modules.localizer.mylocalizer import MyLocalizer
 
 # interface imports
 
-from modules.gui.wall_customizer.panel_wall_customizer import PanelLayerMgr, EVT_WALL_SETUP_CHANGED
+from modules.gui.wall_customizer.panel_wall_customizer import PanelLayerMgr, EVT_WALL_SETUP_CHANGED, StaticBoxWallCustomizerWrapper
 
 
 
@@ -108,6 +110,11 @@ class PanelSolverInfo(wx.Panel):
         self.info_limit=wx.StaticText(self,label="")
         self.sizer_v.Add(self.info_limit, 0, wx.LEFT, 3)
 
+
+        self.clock=wxclock.AnalogClock(self)
+        self.sizer_v.Add(self.clock, 0, wx.LEFT | wx.EXPAND, 3)
+
+
         self.SetSizer(self.sizer_v)
         self.SetMinSize((350,-1))
         self.Fit()
@@ -123,7 +130,8 @@ class PanelSolverInfo(wx.Panel):
         phi_int_to_out = (solver.Tout-solver.Tint) / Rth
         self.info_phi2.SetLabel("Thermal flux from interior to out  = %g W/m²" % phi_int_to_out)
         Nx= sum([layer.Npoints for layer in solver.wall.layers])
-        self.info_Nx.SetLabel("Nx= %d" % Nx)
+        text_nx="Nx= %d (" % Nx + str([layer.Npoints for layer in solver.wall.layers]) + ")"
+        self.info_Nx.SetLabel(text_nx)
         limiter=(solver.steps_to_statio/solver.limiter_ratio)
         self.info_limit.SetLabel("limiter = %g" % limiter)
         self.Fit()
@@ -187,6 +195,15 @@ class MainPanel(wx.Panel):
         self.sizer_v = wx.BoxSizer(wx.VERTICAL)
 
 
+
+# =============================================================================
+# panel to manage layers
+# =============================================================================
+        # self.layermgr=PanelLayerMgr(self)
+        self.layermgr=StaticBoxWallCustomizerWrapper(self)
+
+        self.sizer_v.Add(self.layermgr.sizer,0, wx.ALL | wx.EXPAND,2)
+
 # =============================================================================
 # panel with main actions
 # =============================================================================
@@ -203,24 +220,14 @@ class MainPanel(wx.Panel):
 
         self.sizer_v.Add(self.panel_menu,0, wx.ALL,2)
 # =============================================================================
-# panel to manage layer
-# =============================================================================
-        # self.mat_creator=PanelMaterialCreator(self)
-        self.layermgr=PanelLayerMgr(self)
-        self.layermgr.panel_layer_list.load_layers(self.solver.wall.layers)
-
-        sizer_h=wx.BoxSizer(wx.HORIZONTAL)
-        # sizer_h.Add(self.mat_creator,0, wx.ALL | wx.EXPAND,2)
-        sizer_h.Add(self.layermgr,0, wx.ALL,2)
-
-        self.sizer_v.Add(sizer_h,0, wx.ALL | wx.ALL,2)
-# =============================================================================
 # panel to show animated figure
 # =============================================================================
 
 
-        self.panel_fig_sliders=wx.Panel(self)
+        self.panel_fig_sliders=wx.Panel(self, style=wx.BORDER_STATIC)
         self.panel_fig_sliders.solver=self.solver
+
+
         self.panel_fig_sliders.localizer=self.localizer
 
         self.slider_Tint=wx.Slider(self.panel_fig_sliders,value=self.solver.Tint,minValue=self.solver.Tmin, maxValue=self.solver.Tmax, style=wx.SL_VALUE_LABEL | wx.SL_VERTICAL | wx.SL_INVERSE| wx.SL_AUTOTICKS, name="Tint")

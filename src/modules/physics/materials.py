@@ -21,10 +21,7 @@ class Material:
 
 
 
-# taken from http://meteo.re.free.fr/thermo.php :
 
-
-# others:
 
 
 

@@ -57,6 +57,8 @@ class MyLocalizer(Localizer):
         self.texts["en"]["button_edit_confirm"]="Confirm"
         self.texts["fr"]["button_edit_confirm"]="Confirmer"
 
+        self.texts["fr"]["button_add"]="Ajouter une couche au début"
+
 
 
         self.texts["en"]["button_load"]="Load ->"

@@ -227,8 +227,10 @@ class PanelLayer(wx.Panel):
 
 
         self.typechoice= wx.Choice(self,choices=self.solver.wall.config.get_material_list())
-        self.typechoice.SetSelection(0)
+
         self.typechoice.Bind(wx.EVT_CHOICE, self.on_choice_mat)
+
+
         self.sizer.Add(self.typechoice, 0, wx.ALL | wx.EXPAND , 3)
 
 
@@ -258,6 +260,11 @@ class PanelLayer(wx.Panel):
         self.sizer_h.Add(self.sizer_v2,0,wx.ALL,2)
 
         self.SetSizer(self.sizer_h)
+
+        self.typechoice.SetSelection(0)
+        mat_name=self.typechoice.GetStrings()[0]
+        self.set_mat_vals(mat_name)
+
         self.Layout()
         self.Fit()
 
@@ -265,16 +272,18 @@ class PanelLayer(wx.Panel):
         iselect=self.typechoice.GetSelection()
         mat_name=self.typechoice.GetStrings()[iselect]
 
-        mat=self.solver.wall.config.get_material(mat_name)
-        self.set_mat_vals(mat)
+        # mat=self.solver.wall.config.get_material(mat_name)
+        self.set_mat_vals(mat_name)
         self.disable_mat_input()
 
-    def set_mat_vals(self, mat):
+    def set_mat_vals(self, mat_name):
+        mat=self.solver.wall.config.get_material(mat_name)
         self.input_layer_mat_lambda.SetValue(mat.la)
 
         self.input_layer_mat_rho.SetValue(mat.rho)
 
         self.input_layer_mat_cp.SetValue(mat.Cp)
+        self.disable_mat_input()
 
     def disable_mat_input(self):
         self.input_layer_mat_lambda.Disable()
@@ -282,9 +291,9 @@ class PanelLayer(wx.Panel):
         self.input_layer_mat_cp.Disable()
 
     def get_layer(self):
-        la=self.input_layer_mat_lambda.GetValue()
-        rho=self.input_layer_mat_rho.GetValue()
-        Cp=self.input_layer_mat_cp.GetValue()
+        # la=self.input_layer_mat_lambda.GetValue()
+        # rho=self.input_layer_mat_rho.GetValue()
+        # Cp=self.input_layer_mat_cp.GetValue()
 
         iselect=self.typechoice.GetSelection()
         mat_name=self.typechoice.GetStrings()[iselect]
@@ -305,10 +314,11 @@ class PanelLayer(wx.Panel):
         if mat_id>=0:
             self.disable_mat_input()
         self.typechoice.SetSelection(mat_id)
+        self.set_mat_vals(layer.mat.name)
         self.input_layer_width.SetValue(layer.e)
-        self.input_layer_mat_lambda.SetValue(layer.mat.la)
-        self.input_layer_mat_rho.SetValue(layer.mat.rho)
-        self.input_layer_mat_cp.SetValue(layer.mat.Cp)
+        # self.input_layer_mat_lambda.SetValue(layer.mat.la)
+        # self.input_layer_mat_rho.SetValue(layer.mat.rho)
+        # self.input_layer_mat_cp.SetValue(layer.mat.Cp)
 
     def update_material_names(self):
         iselect=self.typechoice.GetSelection()
@@ -337,6 +347,7 @@ class PanelLayerList(wx.Panel):
         self.solver=parent.solver
         self.localizer=parent.localizer
 
+        self.button_add_begin= wx.Button(self, label="+", size=(30,-1))
 
         self.sizer_h = wx.BoxSizer(wx.HORIZONTAL)
         self.list_of_panel_layer=[]
@@ -345,16 +356,14 @@ class PanelLayerList(wx.Panel):
 
 
 
-        self.SetSizer(self.sizer_h)
         self.Fit()
 
 
     def update_sizer(self):
-        # for child in range(self.sizer_h.GetItemCount()):
-            # self.sizer_h.Detach(child)
         while not(self.sizer_h.IsEmpty()):
             self.sizer_h.Detach(0)
 
+        self.sizer_h.Add( self.button_add_begin)
         for i in range(len(self.list_of_panel_layer)):
             lay=self.list_of_panel_layer[i]
             lay.pos=i
@@ -386,6 +395,7 @@ class PanelLayerList(wx.Panel):
         if pos==None:
             pos=len(self.list_of_panel_layer)-1
         if len(self.list_of_panel_layer)>1:
+
             self.list_of_panel_layer.pop(pos).Destroy()
             self.update_sizer()
             return True
@@ -430,7 +440,7 @@ class PanelLayerMgr(wx.Panel):
         self.localizer.link(self.button_edit.SetLabel, "button_edit", "button_edit")
 
         # self.button_add= wx.Button(self)
-        # self.localizer.link(self.button_add.SetLabel, "button_add", "button_add")
+        # self.localizer.link(self.button_add.SetLabel, "button_add", "button_add", text="Add at beginning")
 
         # self.button_remove= wx.Button(self)
         # self.localizer.link(self.button_remove.SetLabel, "button_remove", "button_remove")
@@ -456,6 +466,9 @@ class PanelLayerMgr(wx.Panel):
         self.button_create_material= wx.Button(self)
         self.localizer.link(self.button_create_material.SetLabel, "button_create_material", "button_create_material")
 
+        self.button_collapse_list= wx.Button(self)
+        self.localizer.link(self.button_collapse_list.SetLabel, "button_collapse_list", "button_collapse_list", text="Hide")
+
         self.sizer_h.Add(self.button_edit, 0, wx.ALL, 5)
         # self.sizer_h.Add(self.button_add, 0, wx.ALL, 5)
         # self.sizer_h.Add(self.button_remove, 0, wx.ALL, 5)
@@ -465,6 +478,7 @@ class PanelLayerMgr(wx.Panel):
         self.sizer_h.Add(self.button_save, 0, wx.ALL, 5)
         self.sizer_h.Add(self.ctrl_save_name, 0, wx.ALL | wx.EXPAND, 5)
         self.sizer_h.Add(self.button_create_material, 0, wx.ALL, 5)
+        self.sizer_h.Add(self.button_collapse_list, 0, wx.ALL, 5)
 
 
 
@@ -479,11 +493,12 @@ class PanelLayerMgr(wx.Panel):
 
         self.button_edit.Bind(wx.EVT_BUTTON, self.on_press_button_edit)
         # self.button_add.Bind(wx.EVT_BUTTON, self.on_press_add_layer)
+        self.panel_layer_list.button_add_begin.Bind(wx.EVT_BUTTON, self.on_press_add_layer)
         # self.button_remove.Bind(wx.EVT_BUTTON, self.on_press_remove_layer)
         self.button_load.Bind(wx.EVT_BUTTON, self.on_press_load_scenario)
         self.button_save.Bind(wx.EVT_BUTTON, self.on_press_save_scenario)
         self.button_create_material.Bind(wx.EVT_BUTTON, self.on_press_button_create_material)
-
+        self.button_collapse_list.Bind(wx.EVT_BUTTON, self.on_press_button_collapse_list)
 
 
         self.SetSizer(self.sizer_v)
@@ -498,6 +513,9 @@ class PanelLayerMgr(wx.Panel):
 
     def on_press_button_create_material(self,event):
         mat_creator=PanelMaterialCreator(self)
+    def on_press_button_collapse_list(self,event):
+        self.panel_layer_list.Show(show=not(self.panel_layer_list.IsShown()))
+        self.GetTopLevelParent().Layout()
 
     def on_press_button_edit(self,event):
         self.toggle_edit()
@@ -507,19 +525,18 @@ class PanelLayerMgr(wx.Panel):
         if not(self.is_frozen): # set it to unfrozen state
             self.localizer.link(self.button_edit.SetLabel, "button_edit_confirm", "button_edit")
             self.panel_layer_list.Enable()
-            # self.button_add.Enable()
-            # if len(self.panel_layer_list.list_of_panel_layer)>1:
-                # self.button_remove.Enable()
+            self.panel_layer_list.button_add_begin.Show()
+            self.Layout()
             if set_custom:
                 self.choice_scenario.SetSelection(0)
             # ~ self.panel_layers.Thaw()
         else:# set to frozen state and send confirmed layers above
             self.localizer.link(self.button_edit.SetLabel, "button_edit", "button_edit")
-            # ~ self.panel_layers.Freeze()
             self.panel_layer_list.Disable()
-            # self.button_add.Disable()
-            # self.button_remove.Disable()
             self.send_layers(self.panel_layer_list.gather_layers())
+
+            self.panel_layer_list.button_add_begin.Hide()
+            self.Layout()
 
     def on_press_save_scenario(self,event):
         preset_name=self.ctrl_save_name.GetValue()
@@ -545,9 +562,9 @@ class PanelLayerMgr(wx.Panel):
         # ~ wx.QueueEvent(self.parent, event)
         # ~ self.GetEventHandler().ProcessEvent(event)
 
-    # def on_press_add_layer(self, event):
-        # self.panel_layer_list.add_layer()
-        # self.button_remove.Enable()
+    def on_press_add_layer(self, event):
+        self.panel_layer_list.add_layer(0)
+
 
     # def on_press_remove_layer(self, event):
         # self.panel_layer_list.remove_layer()
@@ -598,5 +615,17 @@ class PanelLayerMgr(wx.Panel):
 
 
 
+class StaticBoxWallCustomizerWrapper(wx.StaticBox):
+    def __init__(self, parent):
+        wx.StaticBox.__init__(self, parent, label="Wall customizer")
 
+        self.parent=parent
+        self.solver=parent.solver
+        self.localizer=parent.localizer
+
+        self.sizer=wx.StaticBoxSizer(self, wx.VERTICAL)
+
+
+        self.wall_customizer=PanelLayerMgr(self)
+        self.sizer.Add(self.wall_customizer)
 
