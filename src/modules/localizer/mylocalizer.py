@@ -48,18 +48,17 @@ class MyLocalizer(Localizer):
         self.texts["en"]["button_statio_tooltip"]="Go directly to the temperature profile established after a long time "
         self.texts["fr"]["button_statio_tooltip"]="Avance la simulation jusqu'à l'état stationnaire."
 
-        # self.texts["en"]["button_statio_tooltip"]="Go directly to the temperature profile established after a long time "
-        # self.texts["fr"]["button_statio_tooltip"]="Avance la simulation jusqu'à l'état stationnaire."
+        self.texts["en"]["button_reset"]="Reset"
+        self.texts["fr"]["button_reset"]="Réinitialiser"
 
+
+
+        # wall customizer
         self.texts["en"]["button_edit"]="Edit"
         self.texts["fr"]["button_edit"]="Editer"
 
         self.texts["en"]["button_edit_confirm"]="Confirm"
         self.texts["fr"]["button_edit_confirm"]="Confirmer"
-
-        self.texts["fr"]["button_add"]="Ajouter une couche au début"
-
-
 
         self.texts["en"]["button_load"]="Load ->"
         self.texts["fr"]["button_load"]="Charger ->"
@@ -68,7 +67,7 @@ class MyLocalizer(Localizer):
         self.texts["fr"]["button_load_tooltip"]="Charge le mur prédéfini sélectionner dans le menu déroulant à droite."
 
         self.texts["en"]["button_save"]="Save"
-        self.texts["fr"]["button_save"]="Enregistrer"
+        self.texts["fr"]["button_save"]="<- Enregistrer"
 
         self.texts["en"]["button_save_tooltip"]="Save the current wall configuration to the list of presets."
         self.texts["fr"]["button_save_tooltip"]="Enregistre la configuration de mur actuelle avec le nom indiqué ci-contre, ou remplace la configuration actuelle si aucun nom n'est renseigné."
@@ -76,6 +75,10 @@ class MyLocalizer(Localizer):
         self.texts["en"]["button_create_material"]="Edit materials"
         self.texts["fr"]["button_create_material"]="Modifier les matériaux"
 
+        self.texts["fr"]["button_collapse_list"]="> Réduire <"
+
+
+        # material creator
         self.texts["en"]["button_save_mat"]="Save"
         self.texts["fr"]["button_save_mat"]="Enregistrer"
 
@@ -93,4 +96,8 @@ class MyLocalizer(Localizer):
 
         self.texts["en"]["button_delete_mat_tooltip"]="Does nothing yet."
         self.texts["fr"]["button_delete_mat_tooltip"]="Ne fait rien pour l'instant."
+
+        self.texts["en"]["dialog_overwrite_name"]="This will overwrite the material, please confirm."
+        self.texts["fr"]["dialog_overwrite_name"]="Confirmez le changement des propriétés du matériau."
+
 

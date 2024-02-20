@@ -1,6 +1,6 @@
 import wx
-import wx.lib.scrolledpanel as scrolled
-import wx.lib.analogclock as wxclock
+
+# import wx.lib.analogclock as wxclock
 
 import matplotlib.backends.backend_wxagg
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg
@@ -19,9 +19,9 @@ from modules.localizer.mylocalizer import MyLocalizer
 
 # interface imports
 
-from modules.gui.wall_customizer.panel_wall_customizer import PanelLayerMgr, EVT_WALL_SETUP_CHANGED, StaticBoxWallCustomizerWrapper
+from modules.gui.wall_customizer.panel_wall_customizer import PanelLayerMgr, StaticBoxWallCustomizerWrapper
 
-
+from modules.gui.events import *
 
 
 
@@ -111,8 +111,6 @@ class PanelSolverInfo(wx.Panel):
         self.sizer_v.Add(self.info_limit, 0, wx.LEFT, 3)
 
 
-        self.clock=wxclock.AnalogClock(self)
-        self.sizer_v.Add(self.clock, 0, wx.LEFT | wx.EXPAND, 3)
 
 
         self.SetSizer(self.sizer_v)

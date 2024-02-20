@@ -16,13 +16,16 @@ class Localizer:
             return "missing text"
 
 
-    def set_text(self, text_id, text):
-        self.texts[self.lang][text_id]=text
-        self.missing[self.lang].pop(text_id)
+    def set_text(self, lang, text_id, text):
+        self.texts[lang][text_id]=text
+        try:
+            self.missing[lang].pop(text_id)
+        except ValueError:
+            return
 
     def link(self,setter, text_id, link_name, text="missing text"):
         if self.get_text(text_id)=="missing text":
-            self.set_text(text_id, text)
+            self.set_text(self.lang, text_id, text)
 
         setter(self.get_text(text_id))
         self.links[link_name]=(setter,text_id)
@@ -37,13 +40,17 @@ class Localizer:
     def set_lang(self, lang):
         if lang in self.langs:
             self.lang=lang
+            keys_to_del=[]
             for key, link in self.links.items():
                 setter,text_id=link
                 try:
                     setter(self.get_text(text_id))
                 except RuntimeError:
-                    self.links.pop(key)
+                    keys_to_del.append(key)
+
                     continue
+            for key in keys_to_del:
+                self.links.pop(key)
             return True
         else:
             return False
