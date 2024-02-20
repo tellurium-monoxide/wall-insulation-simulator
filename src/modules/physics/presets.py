@@ -18,7 +18,7 @@ class WallConfigData:
         self.presets={}
 
 
-    def add_material(self,mat,force=False):
+    def add_material(self,mat):
         self.materials[mat.name]=mat
 
 
@@ -31,6 +31,7 @@ class WallConfigData:
                 return False
             else:
                 for preset_name in name_list:
+                    print("Deleting preset:", preset_name)
                     self.remove_preset_wall(preset_name)
                 return self.__remove_material__(name_to_be_del)
         else:
@@ -39,6 +40,7 @@ class WallConfigData:
     def __remove_material__(self, name_to_be_del):
         if (name_to_be_del in self.get_material_list()):
             self.materials.pop(name_to_be_del)
+            print("Deleting material:", name_to_be_del)
             return True
         else:
             return False
@@ -62,11 +64,13 @@ class WallConfigData:
 
             if not(named_layer[1] in self.materials):
                 print("preset has unknown material")
-                return
+                return False
             else:
                 layers.append(Layer(e=named_layer[0], mat = self.get_material(named_layer[1])))
 
+
         self.presets[name]=layers
+        return True
 
 
     def remove_preset_wall(self,name):
@@ -141,5 +145,4 @@ DefaultConfig.add_preset_wall("Béton seul", [(0.4, "Béton")])
 
 
 
-print(DefaultConfig.get_list_presets_using_material("Laine de bois"))
 

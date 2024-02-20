@@ -23,9 +23,9 @@ from .layered_wall import Wall
 
 
 NPOINT_PREFERRED_PER_LAYER=10
-NPOINT_MINIMAL_PER_LAYER=5
+NPOINT_MINIMAL_PER_LAYER=8
 
-
+LIMITER_RATIO = 2
 
 
 
@@ -137,7 +137,7 @@ class SolverHeatEquation1dMultilayer:
     def remesh_implicit(self):
         current_length=0
         self.time=0
-        self.dt=100
+        self.dt=120
 
         if len(self.wall.layers)>0:
             min_width= min([l.e for l in self.wall.layers])
@@ -508,13 +508,13 @@ class SolverHeatEquation1dMultilayer:
             self.time_since_redraw=time_new_redraw-self.time_last_redraw
             needRedraw=self.time_since_redraw > 50*1000000 # 50 is main_panel.timer_update_redraw.GetInterval()
 
-            isTooFast=self.time_since_redraw > 0 and self.updates_since_redraw/self.time_since_redraw*1e9 > self.steps_to_statio/self.limiter_ratio
+            isTooFast=self.time_since_redraw > 0 and self.updates_since_redraw/self.time_since_redraw*1e9 > self.steps_to_statio/LIMITER_RATIO
             if  not(needRedraw) and not(isTooFast):
                 self.advance_time()
                 self.updates_since_redraw+=1
 
-                # ~ elif isTooFast:
-                    # ~ print("limiting updates per sec")
+            # elif isTooFast:
+                # print("limiting updates per sec")
 
 
 
