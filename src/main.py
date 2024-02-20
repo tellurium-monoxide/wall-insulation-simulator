@@ -124,7 +124,7 @@ class PanelSolverInfo(wx.Panel):
         Rth=sum([l.Rth for l in solver.wall.layers])
         self.info_Rth.SetLabel("Total thermal resistance = %g K.m²/W" % Rth)
         phi_int_to_solver=solver.compute_phi()
-        self.info_phi.SetLabel("Thermal flux from interior to solver = %g W/m²" % phi_int_to_solver)
+        self.info_phi.SetLabel("Thermal flux from interior to wall = %g W/m²" % phi_int_to_solver)
         phi_int_to_out = (solver.Tout-solver.Tint) / Rth
         self.info_phi2.SetLabel("Thermal flux from interior to out  = %g W/m²" % phi_int_to_out)
         Nx= sum([layer.Npoints for layer in solver.wall.layers])
