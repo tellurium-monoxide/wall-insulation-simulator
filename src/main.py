@@ -9,16 +9,15 @@ import copy
 from functools import partial
 
 # local imports
-from physics_module.solver import Layer, Material
-from physics_module.solver import SolverHeatEquation1dMultilayer as Solver
+from modules.physics.solver import Layer, Material
+from modules.physics.solver import SolverHeatEquation1dMultilayer as Solver
 # ~ from physics_module.materials import Material, DefaultMaterials
 
-from localizer.mylocalizer import MyLocalizer
+from modules.localizer.mylocalizer import MyLocalizer
 
 # interface imports
 
-from panel_input_physical_value import PanelNumericInput as PanelNumericInput
-from panel_wall_creator import PanelLayerMgr, PanelMaterialCreator, EVT_WALL_SETUP_CHANGED
+from modules.gui.wall_customizer.panel_wall_customizer import PanelLayerMgr, EVT_WALL_SETUP_CHANGED
 
 
 
@@ -130,6 +129,43 @@ class PanelSolverInfo(wx.Panel):
         self.Fit()
         self.Thaw()
 
+
+
+class PanelSimulationControls(wx.Panel):
+    def __init__(self,parent):
+        wx.Panel.__init__(self,parent)
+        self.parent=parent
+        self.localizer=parent.localizer
+        self.solver=parent.solver
+
+        space=5
+        sizer_h = wx.BoxSizer(wx.HORIZONTAL)
+
+        self.button_run = wx.Button(self)
+        self.localizer.link(self.button_run.SetLabel, "run_button", "run_button")
+        self.localizer.link(self.button_run.SetToolTip, "run_button_tooltip", "run_button_tooltip")
+
+        sizer_h.Add(self.button_run, 0, wx.ALL, space)
+
+        self.button_adv = wx.Button(self)
+        self.localizer.link(self.button_adv.SetLabel, "button_advance", "button_advance")
+
+        sizer_h.Add(self.button_adv, 0, wx.ALL, space)
+
+        self.button_statio = wx.Button(self)
+        self.localizer.link(self.button_statio.SetLabel, "button_statio", "button_statio", text="aa")
+        self.localizer.link(self.button_statio.SetToolTip, "button_statio_tooltip", "button_statio_tooltip")
+
+        sizer_h.Add(self.button_statio, 0, wx.ALL, space)
+
+        self.button_reset = wx.Button(self)
+        self.localizer.link(self.button_reset.SetLabel, "button_reset", "button_reset", text="")
+        # self.localizer.link(self.button_statio.SetToolTip, "button_reset_tooltip", "button_reset_tooltip")
+        sizer_h.Add(self.button_reset, 0, wx.ALL, space)
+
+        self.SetSizer(sizer_h)
+        self.Fit()
+
 class MainPanel(wx.Panel):
     def __init__(self,parent):
         wx.Panel.__init__(self,parent)
@@ -145,42 +181,25 @@ class MainPanel(wx.Panel):
         self.localizer.link(self.solver.set_text_inside, "plot_text_inside", "plot_text_inside")
         self.localizer.link(self.solver.set_text_inside, "plot_text_outside", "plot_text_outside")
 
-        self.run_sim=False
+
 
         # main vertical sizer
         self.sizer_v = wx.BoxSizer(wx.VERTICAL)
 
-        space=5
+
 # =============================================================================
 # panel with main actions
 # =============================================================================
-        self.panel_menu = wx.Panel(self)
-        sizer_h = wx.BoxSizer(wx.HORIZONTAL)
+        self.panel_menu = PanelSimulationControls(self)
 
-        # ~ self.panel_menu.button_run = wx.Button(self.panel_menu, label='Run')
-        self.panel_menu.button_run = wx.Button(self.panel_menu)
-        self.localizer.link(self.panel_menu.button_run.SetLabel, "run_button", "run_button")
-        self.localizer.link(self.panel_menu.button_run.SetToolTip, "run_button_tooltip", "run_button_tooltip")
+
         self.panel_menu.button_run.Bind(wx.EVT_BUTTON, self.on_press_run)
-        sizer_h.Add(self.panel_menu.button_run, 0, wx.ALL, space)
-
-        self.panel_menu.button_adv = wx.Button(self.panel_menu, label='Advance one timestep')
-        self.localizer.link(self.panel_menu.button_adv.SetLabel, "button_advance", "button_advance")
         self.panel_menu.button_adv.Bind(wx.EVT_BUTTON, self.on_press_advance)
-        sizer_h.Add(self.panel_menu.button_adv, 0, wx.ALL, space)
-
-        self.panel_menu.button_statio = wx.Button(self.panel_menu, label='Set statio')
-        self.localizer.link(self.panel_menu.button_statio.SetLabel, "button_statio", "button_statio")
-        self.localizer.link(self.panel_menu.button_statio.SetToolTip, "button_statio_tooltip", "button_statio_tooltip")
         self.panel_menu.button_statio.Bind(wx.EVT_BUTTON, self.on_press_statio)
-        sizer_h.Add(self.panel_menu.button_statio, 0, wx.ALL, space)
-
-        self.panel_menu.button_reset = wx.Button(self.panel_menu, label='Reset')
         self.panel_menu.button_reset.Bind(wx.EVT_BUTTON, self.on_press_reset)
-        sizer_h.Add(self.panel_menu.button_reset, 0, wx.ALL, space)
 
 
-        self.panel_menu.SetSizer(sizer_h)
+
 
         self.sizer_v.Add(self.panel_menu,0, wx.ALL,2)
 # =============================================================================
@@ -246,12 +265,7 @@ class MainPanel(wx.Panel):
 # bindings
 # =============================================================================
         # manage main update
-        self.updates_since_redraw=0
-        self.time_since_redraw=0
-        self.time_last_redraw=time.perf_counter_ns()
 
-        self.this_run_time=0
-        self.this_run_updates=0
 
 #        self.thread_update_loop = Thread(target=self.update_loop_thread)
         self.timer_update_redraw= wx.Timer(self)
@@ -259,24 +273,20 @@ class MainPanel(wx.Panel):
 
 
 
-        self.Bind(EVT_WALL_SETUP_CHANGED, self.on_receive_layers)
+        self.Bind(EVT_WALL_SETUP_CHANGED, self.on_wall_setup_change)
 
         self.slider_Tint.Bind(wx.EVT_SLIDER, self.on_slide_Tint)
         self.slider_Tout.Bind(wx.EVT_SLIDER, self.on_slide_Tout)
-        self.Bind(wx.EVT_CLOSE , self.on_close)
 
 
-    def on_close(self,event):
-        if self.run_sim:
-            self.timer_update_redraw.Stop()
-            self.run_sim=False
-        event.skip()
+
+
 
     def on_press_run(self, event):
-        self.run_sim=not(self.run_sim)
-        if self.run_sim:
-            self.this_run_start=time.perf_counter_ns()
-            self.thread_update_loop = Thread(target=self.update_loop_thread)
+        self.solver.run_sim=not(self.solver.run_sim)
+        if self.solver.run_sim:
+            self.solver.this_run_start=time.perf_counter_ns()
+            self.thread_update_loop = Thread(target=self.solver.update_loop)
             self.thread_update_loop.start()
             self.timer_update_redraw.Start(50)
             self.localizer.link(self.panel_menu.button_run.SetLabel, "run_button_pause", "run_button")
@@ -286,11 +296,11 @@ class MainPanel(wx.Panel):
             self.thread_update_loop.join()
             self.localizer.link(self.panel_menu.button_run.SetLabel, "run_button", "run_button")
             self.panel_menu.button_adv.Enable()
-            self.this_run_time=0
-            self.this_run_updates=0
+            self.solver.this_run_time=0
+            self.solver.this_run_updates=0
 
 
-    def on_receive_layers(self, event):
+    def on_wall_setup_change(self, event):
         # ~ layers=event.GetLayers()
         # ~ self.solver.change_layers(layers)
         self.redraw()
@@ -308,13 +318,13 @@ class MainPanel(wx.Panel):
     def on_slide_Tint(self,event):
         Tint= self.slider_Tint.GetValue()
         self.solver.set_inside_temp(Tint)
-        if not(self.run_sim):
+        if not(self.solver.run_sim):
             self.redraw()
 
     def on_slide_Tout(self,event):
         Tout= self.slider_Tout.GetValue()
         self.solver.set_outside_temp(Tout)
-        if not(self.run_sim):
+        if not(self.solver.run_sim):
             self.redraw()
 
 
@@ -324,39 +334,23 @@ class MainPanel(wx.Panel):
         self.redraw()
 
     def on_timer_redraw(self,event):
-
         self.redraw()
-        # ~ print("updates since last redraw ",self.updates_since_redraw)
 
         time_new_redraw=time.perf_counter_ns()
-        self.time_since_redraw=time_new_redraw-self.time_last_redraw
-        # ~ print("time since last redraw ",self.time_since_redraw/1e6, 'ms')
 
-        self.this_run_time=time_new_redraw-self.this_run_start
-        self.this_run_updates+=self.updates_since_redraw
+        self.solver.time_since_redraw=time_new_redraw-self.solver.time_last_redraw
+        self.solver.this_run_time=time_new_redraw-self.solver.this_run_start
+        self.solver.this_run_updates+=self.solver.updates_since_redraw
+        # ~ print("updates since last redraw ",self.updates_since_redraw)
+        # ~ print("time since last redraw ",self.time_since_redraw/1e6, 'ms')
         # ~ print("updates per seconds :",1e9*self.this_run_updates/self.this_run_time)
         # ~ print("progression to statio :",self.solver.time_to_statio/(self.solver.time+self.solver.dt))
 
-        self.time_last_redraw=time.perf_counter_ns()
+        self.solver.time_last_redraw=time.perf_counter_ns()
+        self.solver.updates_since_redraw=0
 
-        self.updates_since_redraw=0
 
 
-    def update_loop_thread(self):
-        time_new_redraw=time.perf_counter_ns()
-        self.time_since_redraw=time_new_redraw-self.time_last_redraw
-        while self.run_sim:
-            time.sleep(0.00001)
-            time_new_redraw=time.perf_counter_ns()
-            self.time_since_redraw=time_new_redraw-self.time_last_redraw
-            needRedraw=self.time_since_redraw < self.timer_update_redraw.GetInterval()*1000000
-
-            isTooFast=self.time_since_redraw > 0 and self.updates_since_redraw/self.time_since_redraw*1e9 > self.solver.steps_to_statio/self.solver.limiter_ratio
-            if  needRedraw and not(isTooFast):
-                self.solver.advance_time()
-                self.updates_since_redraw+=1
-            # ~ elif isTooFast:
-                # ~ print("limiting updates per sec")
 
 
 
@@ -431,12 +425,18 @@ class MainFrame(wx.Frame):
 # =============================================================================
 # show the frame
 # =============================================================================
-        # ~ display = wx.Display(0)
-        # ~ x, y, w, h = display.GetGeometry()
-        # ~ self.SetPosition((w, h))
-        # ~ self.Maximize(True)
+        self.Bind(wx.EVT_CLOSE , self.on_close)
+        self.localizer.set_lang("fr")
         self.Show()
 
+
+
+    def on_close(self,event):
+        if self.main_panel.solver.run_sim:
+            self.main_panel.timer_update_redraw.Stop()
+            self.main_panel.solver.run_sim=False
+        print(self.localizer.missing)
+        event.Skip()
 
     def on_lang_change(self,event):
         self.localizer.set_lang(event.GetEventObject().FindItemById(event.GetId()).GetItemLabel().lower())

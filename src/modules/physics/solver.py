@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import time
 
 import numpy as np
 
@@ -71,6 +72,15 @@ class SolverHeatEquation1dMultilayer:
 
         self.text_inside=""
         self.text_inside=""
+
+
+        self.run_sim=False
+        self.updates_since_redraw=0
+        self.time_since_redraw=0
+        self.time_last_redraw=time.perf_counter_ns()
+
+        self.this_run_time=0
+        self.this_run_updates=0
 
 
     def remesh(self):
@@ -197,7 +207,7 @@ class SolverHeatEquation1dMultilayer:
             vmax=max(vmax, max(flux))
             vmin=min(vmin, min(flux))
             vmaxabs=max(vmaxabs, max(abs(flux)))
-        
+
         self.vmaxabs=max(vmaxabs, self.vmaxabs)
         vmin-=0.0001
         vmax+=0.0001
@@ -209,7 +219,7 @@ class SolverHeatEquation1dMultilayer:
             flux=layer.flux
             r=flux/(abs(flux)+0.00001)*(abs(flux)/(self.vmaxabs+0.00001))**(1/5)
             norm=mplcolors.Normalize(vmin=-1, vmax=1)
-            
+
             # print(r)
             cmap=matplotlib.cm.get_cmap("coolwarm")
             self.ax.scatter(x,T, color=cmap(norm(r)))
@@ -365,7 +375,21 @@ class SolverHeatEquation1dMultilayer:
 
 
 
+    def update_loop(self):
+        time_new_redraw=time.perf_counter_ns()
+        self.time_since_redraw=time_new_redraw-self.time_last_redraw
+        while self.run_sim:
+            time.sleep(0.00001)
+            time_new_redraw=time.perf_counter_ns()
+            self.time_since_redraw=time_new_redraw-self.time_last_redraw
+            needRedraw=self.time_since_redraw < 50*1000000 # 50 is main_panel.timer_update_redraw.GetInterval()
 
+            isTooFast=self.time_since_redraw > 0 and self.updates_since_redraw/self.time_since_redraw*1e9 > self.steps_to_statio/self.limiter_ratio
+            if  needRedraw and not(isTooFast):
+                self.advance_time()
+                self.updates_since_redraw+=1
+            # ~ elif isTooFast:
+                # ~ print("limiting updates per sec")
 
 
 

@@ -10,15 +10,17 @@ import time
 import copy
 
 # local imports
-from physics_module.solver import Layer, Material
+from ...physics.solver import Layer, Material
 
 
-from localizer.localizer import Localizer
+from ...localizer.localizer import Localizer
 
-from panel_input_physical_value import PanelNumericInput as PanelNumericInput
+from ..controls_numeric_values.bounded_value import PanelNumericInput as PanelNumericInput
 
+
+
+# events to be propagated to the main panel when simulation parameters changes
 eventWallSetupChanged, EVT_WALL_SETUP_CHANGED = wx.lib.newevent.NewCommandEvent()
-
 eventWallMaterialListChanged, EVT_WALL_MATERIALS_CHANGED = wx.lib.newevent.NewCommandEvent()
 
 
