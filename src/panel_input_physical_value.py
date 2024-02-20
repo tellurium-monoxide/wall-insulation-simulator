@@ -66,7 +66,7 @@ class ValidatorDecimalInputOnly(wx.Validator):
         # print(split)
         if (len(split)>1 and len(split[1])>self.fraction_width):
             textCtrl.ChangeValue(self.previous_text)
-        if len(entered)>=2 and entered[0]=="0" and entered[1]=="0":
+        if len(entered)>=2 and entered[0]=="0" and entered[1]in "0":
             textCtrl.ChangeValue(self.previous_text)
         # if len(entered)==0:
             # textCtrl.ChangeValue("1")
@@ -80,25 +80,29 @@ class ValidatorDecimalInputOnly(wx.Validator):
 
              Note that every validator must implement the Clone() method.
          """
-         return ValidatorDecimalInputOnly()
+         return ValidatorDecimalInputOnly(min_value=self.min_value, max_value=self.max_value)
 
 
     def Validate(self, win):
          """ Validate the contents of the given text control.
          """
          textCtrl = self.GetWindow()
-         text = textCtrl.GetValue()
+         entered = textCtrl.GetValue()
 
-         if len(text) == 0:
+         if len(entered) == 0:
              wx.MessageBox("The numeric input must have something entered", "Error")
              textCtrl.SetBackgroundColour("pink")
              textCtrl.SetFocus()
              textCtrl.Refresh()
              return False
          else:
-             textCtrl.SetBackgroundColour(
-                 wx.SystemSettings_GetColour(wx.SYS_COLOUR_WINDOW))
-             textCtrl.Refresh()
+             val=float(entered)
+             # print("validating", val,self.min_value,self.max_value )
+             if val < self.min_value:
+
+                 textCtrl.ChangeValue(str(self.min_value))
+             if val > self.max_value:
+                 textCtrl.ChangeValue(str(self.max_value))
              return True
 
 
@@ -132,6 +136,7 @@ class PanelNumericInput(wx.Panel):
         validator=ValidatorDecimalInputOnly(min_value=min_value, max_value=max_value)
 
         self.num_ctrl = wx.TextCtrl(self, value=str(def_val), validator=validator, size=(50, -1))
+        self.num_ctrl.SetToolTip("Min:%g\nMax:%g" % (min_value, max_value))
         self.unit=wx.StaticText(self, label=unit)
 
         self.sizer_h=wx.BoxSizer(wx.HORIZONTAL)
@@ -145,6 +150,7 @@ class PanelNumericInput(wx.Panel):
         self.Fit()
 
     def GetValue(self):
+        self.Validate()
         return (float(self.num_ctrl.GetValue())/self.unit_scale)
     def SetValue(self, val):
         self.num_ctrl.SetValue(str(val*self.unit_scale))

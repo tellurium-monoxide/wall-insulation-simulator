@@ -4,14 +4,14 @@ import wx.lib.scrolledpanel as scrolled
 import matplotlib.backends.backend_wxagg
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg
 #from matplotlib.backends.backend_wx import NavigationToolbar2Wx
+from functools import partial
 from threading import Thread
 import time
 import copy
 
 # local imports
 from physics_module.solver import Layer, Material
-# from physics_module.solver import SolverHeatEquation1dMultilayer as Solver
-# ~ from physics_module.materials import Material, DefaultMaterials
+
 
 from localizer.localizer import Localizer
 
@@ -20,21 +20,6 @@ from panel_input_physical_value import PanelNumericInput as PanelNumericInput
 eventWallSetupChanged, EVT_WALL_SETUP_CHANGED = wx.lib.newevent.NewCommandEvent()
 
 eventWallMaterialListChanged, EVT_WALL_MATERIALS_CHANGED = wx.lib.newevent.NewCommandEvent()
-
-# ~ myEVT_NEW_LAYERS = wx.NewEventType()
-# ~ EVT_NEW_LAYERS = wx.PyEventBinder(myEVT_NEW_LAYERS, 1)
-
-# ~ class EventNewLayers(wx.PyCommandEvent):
-    # ~ def __init__(self, evtType, id):
-        # ~ wx.PyCommandEvent.__init__(self, evtType, id)
-        # ~ self.layers = None
-
-    # ~ def SetLayers(self, val):
-        # ~ self.layers = val
-
-    # ~ def GetLayers(self):
-        # ~ return self.layers
-
 
 
 
@@ -222,13 +207,14 @@ class PanelMaterialCreator(wx.Frame):
 
 class PanelLayer(wx.Panel):
     def __init__(self, parent):
-        wx.Panel.__init__(self, parent)
+        wx.Panel.__init__(self, parent, style=wx.BORDER_STATIC)
 
         self.parent=parent
         self.solver=parent.solver
         self.localizer=parent.localizer
 
 
+        self.sizer_h = wx.BoxSizer(wx.HORIZONTAL)
         self.sizer = wx.BoxSizer(wx.VERTICAL)
 
 
@@ -258,8 +244,19 @@ class PanelLayer(wx.Panel):
         self.sizer.Add(self.input_layer_mat_cp,0,wx.EXPAND,0)
 
 
+        self.sizer_h.Add(self.sizer,0,wx.EXPAND,0)
 
-        self.SetSizer(self.sizer)
+        self.button_rem= wx.Button(self, label="x", size=(30,-1))
+        self.button_add= wx.Button(self, label="+", size=(30,-1))
+
+
+        self.sizer_v2 = wx.BoxSizer(wx.VERTICAL)
+        self.sizer_v2.Add(self.button_rem,1,wx.ALL,2)
+        self.sizer_v2.Add(self.button_add,1,wx.ALL,2)
+        self.sizer_h.Add(self.sizer_v2,0,wx.ALL,2)
+
+        self.SetSizer(self.sizer_h)
+        self.Layout()
         self.Fit()
 
     def on_choice_mat(self,event):
@@ -344,28 +341,51 @@ class PanelLayerList(wx.Panel):
 
         self.load_layers(self.solver.wall.layers)
 
-        # for lay in self.list_of_panel_layer:
-            # self.sizer_h.Add(lay, 0, wx.LEFT, 3)
+
 
         self.SetSizer(self.sizer_h)
         self.Fit()
 
 
+    def update_sizer(self):
+        # for child in range(self.sizer_h.GetItemCount()):
+            # self.sizer_h.Detach(child)
+        while not(self.sizer_h.IsEmpty()):
+            self.sizer_h.Detach(0)
 
-    def add_layer(self):
-        self.Freeze()
-        lay= PanelLayer(self)
-        self.list_of_panel_layer.append(lay)
-        self.sizer_h.Add(lay, 0, wx.LEFT, 5)
+        for i in range(len(self.list_of_panel_layer)):
+            lay=self.list_of_panel_layer[i]
+            lay.pos=i
+            self.sizer_h.Add(lay, 0, wx.LEFT, 3)
+            lay.button_rem.Bind(wx.EVT_BUTTON, partial(self.on_press_remove,pos=i))
+            lay.button_add.Bind(wx.EVT_BUTTON, partial(self.on_press_add,pos=i+1))
+
+        self.SetSizer(self.sizer_h, deleteOld=True)
         self.Fit()
         self.parent.Fit()
+
+    def on_press_add(self, event, pos=None):
+        # print(pos)
+        self.add_layer(pos=pos)
+
+    def add_layer(self, pos=None):
+        if pos==None:
+            pos=len(self.list_of_panel_layer)
+        self.Freeze()
+        lay= PanelLayer(self)
+        self.list_of_panel_layer.insert(pos, lay)
+        self.update_sizer()
         self.Thaw()
 
-    def remove_layer(self):
+    def on_press_remove(self, event, pos=None):
+        # print(pos)
+        self.remove_layer(pos=pos)
+    def remove_layer(self, pos=None):
+        if pos==None:
+            pos=len(self.list_of_panel_layer)-1
         if len(self.list_of_panel_layer)>1:
-            self.list_of_panel_layer.pop().Destroy()
-            self.Fit()
-            self.parent.Fit()
+            self.list_of_panel_layer.pop(pos).Destroy()
+            self.update_sizer()
             return True
         return False
 
@@ -407,11 +427,11 @@ class PanelLayerMgr(wx.Panel):
         self.button_edit= wx.Button(self)
         self.localizer.link(self.button_edit.SetLabel, "button_edit", "button_edit")
 
-        self.button_add= wx.Button(self)
-        self.localizer.link(self.button_add.SetLabel, "button_add", "button_add")
+        # self.button_add= wx.Button(self)
+        # self.localizer.link(self.button_add.SetLabel, "button_add", "button_add")
 
-        self.button_remove= wx.Button(self)
-        self.localizer.link(self.button_remove.SetLabel, "button_remove", "button_remove")
+        # self.button_remove= wx.Button(self)
+        # self.localizer.link(self.button_remove.SetLabel, "button_remove", "button_remove")
 
         self.button_load= wx.Button(self)
         self.localizer.link(self.button_load.SetLabel, "button_load", "button_load")
@@ -435,8 +455,8 @@ class PanelLayerMgr(wx.Panel):
         self.localizer.link(self.button_create_material.SetLabel, "button_create_material", "button_create_material")
 
         self.sizer_h.Add(self.button_edit, 0, wx.ALL, 5)
-        self.sizer_h.Add(self.button_add, 0, wx.ALL, 5)
-        self.sizer_h.Add(self.button_remove, 0, wx.ALL, 5)
+        # self.sizer_h.Add(self.button_add, 0, wx.ALL, 5)
+        # self.sizer_h.Add(self.button_remove, 0, wx.ALL, 5)
         self.sizer_h.AddSpacer(20)
         self.sizer_h.Add(self.button_load, 0, wx.ALL, 5)
         self.sizer_h.Add(self.choice_scenario, 0, wx.ALL, 5)
@@ -456,8 +476,8 @@ class PanelLayerMgr(wx.Panel):
         self.sizer_v.Add(self.panel_layer_list, 0, wx.ALL, 3)
 
         self.button_edit.Bind(wx.EVT_BUTTON, self.on_press_button_edit)
-        self.button_add.Bind(wx.EVT_BUTTON, self.on_press_add_layer)
-        self.button_remove.Bind(wx.EVT_BUTTON, self.on_press_remove_layer)
+        # self.button_add.Bind(wx.EVT_BUTTON, self.on_press_add_layer)
+        # self.button_remove.Bind(wx.EVT_BUTTON, self.on_press_remove_layer)
         self.button_load.Bind(wx.EVT_BUTTON, self.on_press_load_scenario)
         self.button_save.Bind(wx.EVT_BUTTON, self.on_press_save_scenario)
         self.button_create_material.Bind(wx.EVT_BUTTON, self.on_press_button_create_material)
@@ -485,9 +505,9 @@ class PanelLayerMgr(wx.Panel):
         if not(self.is_frozen): # set it to unfrozen state
             self.localizer.link(self.button_edit.SetLabel, "button_edit_confirm", "button_edit")
             self.panel_layer_list.Enable()
-            self.button_add.Enable()
-            if len(self.panel_layer_list.list_of_panel_layer)>1:
-                self.button_remove.Enable()
+            # self.button_add.Enable()
+            # if len(self.panel_layer_list.list_of_panel_layer)>1:
+                # self.button_remove.Enable()
             if set_custom:
                 self.choice_scenario.SetSelection(0)
             # ~ self.panel_layers.Thaw()
@@ -495,8 +515,8 @@ class PanelLayerMgr(wx.Panel):
             self.localizer.link(self.button_edit.SetLabel, "button_edit", "button_edit")
             # ~ self.panel_layers.Freeze()
             self.panel_layer_list.Disable()
-            self.button_add.Disable()
-            self.button_remove.Disable()
+            # self.button_add.Disable()
+            # self.button_remove.Disable()
             self.send_layers(self.panel_layer_list.gather_layers())
 
     def on_press_save_scenario(self,event):
@@ -523,14 +543,14 @@ class PanelLayerMgr(wx.Panel):
         # ~ wx.QueueEvent(self.parent, event)
         # ~ self.GetEventHandler().ProcessEvent(event)
 
-    def on_press_add_layer(self, event):
-        self.panel_layer_list.add_layer()
-        self.button_remove.Enable()
+    # def on_press_add_layer(self, event):
+        # self.panel_layer_list.add_layer()
+        # self.button_remove.Enable()
 
-    def on_press_remove_layer(self, event):
-        self.panel_layer_list.remove_layer()
-        if len(self.panel_layer_list.list_of_panel_layer)==1:
-            self.button_remove.Disable()
+    # def on_press_remove_layer(self, event):
+        # self.panel_layer_list.remove_layer()
+        # if len(self.panel_layer_list.list_of_panel_layer)==1:
+            # self.button_remove.Disable()
 
     def on_press_load_scenario(self,event):
         self.load_preset()
