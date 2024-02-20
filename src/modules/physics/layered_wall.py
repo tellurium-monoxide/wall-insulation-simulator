@@ -26,6 +26,8 @@ class Wall:
 
         self.layers=deepcopy(self.config.get_default_preset())
 
+        self.room=deepcopy(self.config.get_default_room())
+
         self.compute_length()
 
 
@@ -45,6 +47,10 @@ class Wall:
             self.remove_layer()
         for layer in new_layers:
             self.add_layer(layer)
+
+
+    def change_room(self, room):
+        self.room=deepcopy(room)
 
 
     def compute_length(self):

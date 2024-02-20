@@ -46,6 +46,17 @@ def format_time(t):
             return "%ds" % (s)
     else:
         return "%dms" % (t*1000)
+
+def format_time_hms(t):
+
+    ts=int(t)
+    d=ts//(24*3600)
+    h=(ts - d * 24 * 3600) // 3600
+    m=(ts - d * 24 * 3600 - h * 3600) // 60
+    s=(ts - d * 24 * 3600 - h * 3600 - m * 60)
+
+    return "%dh%dm%ds" % (h,m,s)
+
 # Layer = namedtuple('Layer', ['e', 'la', 'rho','Cp','dx'])
 
 class SolverHeatEquation1dMultilayer:
@@ -78,6 +89,9 @@ class SolverHeatEquation1dMultilayer:
         self.updates_since_redraw=0
         self.time_since_redraw=0
         self.time_last_redraw=time.perf_counter_ns()
+        self.this_run_start=time.perf_counter_ns()
+
+        self.Tint_is_variable=False
 
         self.this_run_time=0
         self.this_run_updates=0
@@ -127,11 +141,7 @@ class SolverHeatEquation1dMultilayer:
             self.steps_to_statio = self.time_to_statio/self.dt
         self.vmaxabs=0
 
-        # if (len(self.wall.layers))>0:
-            # layerNmin=min(self.wall.layers, key = lambda x:x.Npoints)
-            # if layerNmin.Npoints<NPOINT_MINIMAL_PER_LAYER:
-                # dt= (layerNmin.e/NPOINT_MINIMAL_PER_LAYER)**2 * self.courant / layerNmin.mat.D
-                # self.set_time_step(dt)
+        self.solve_stationnary()
 
 
     def remesh_implicit(self):
@@ -166,6 +176,7 @@ class SolverHeatEquation1dMultilayer:
             self.time_to_statio=max([layer.e**2/layer.mat.D for layer in self.wall.layers])
             self.steps_to_statio = self.time_to_statio/self.dt
         self.vmaxabs=0
+        self.solve_stationnary()
 
 
 
@@ -324,7 +335,7 @@ class SolverHeatEquation1dMultilayer:
         layer=self.wall.layers[0]
         T=layer.Tmesh
         R=layer.dx/layer.mat.la
-        phi= (T[1]-T[0]) /R
+        phi= (T[0]-T[1]) /R
         return phi
 
 
@@ -340,10 +351,6 @@ class SolverHeatEquation1dMultilayer:
         for i in range(len(self.wall.layers)):
             self.wall.layers[i].Tmesh=(self.wall.layers[i].xmesh-self.wall.layers[i].xmesh[0]) / self.wall.layers[i].e * (Ts[i+1]-Ts[i]) +Ts[i]
 
-        phi=0
-        for i in range(len(self.wall.layers)):
-            phi+=(Ts[i+1]-Ts[i])/self.wall.layers[i].Rth*self.wall.layers[i].e
-        print("phi:",phi, "W/m2")
 
 
 
@@ -492,10 +499,13 @@ class SolverHeatEquation1dMultilayer:
 
 
     def advance_time(self):
+        self.update_Tint()
         if self.method=="implicit":
             self.advance_time_implicit()
         elif self.method=="explicit":
             self.advance_time_explicit()
+
+
 
     def update_loop(self):
         time_new_redraw=time.perf_counter_ns()
@@ -518,5 +528,23 @@ class SolverHeatEquation1dMultilayer:
 
 
 
+    def update_Tint(self):
+        if self.Tint_is_variable:
 
+            phi = self.compute_phi()
+
+            dT= -self.dt * self.wall.room.compute_temperature_loss_rate(phi)
+
+            newT= self.Tint + dT
+
+            if newT> self.Tmin and newT<self.Tmax :
+                self.Tint=newT
+
+    def compute_heat_loss(self):
+        phi = self.compute_phi()
+
+        return self.wall.room.compute_heat_loss_rate(phi)
+
+    def update_Tout(self):
+        return
 

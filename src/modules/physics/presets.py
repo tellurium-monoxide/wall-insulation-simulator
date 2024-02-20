@@ -6,6 +6,7 @@ import pickle
 
 from .materials import Material
 from .layers import Layer
+from .room import Room
 
 
 
@@ -16,6 +17,7 @@ class WallConfigData:
     def __init__(self):
         self.materials={}
         self.presets={}
+        self.rooms={}
 
 
     def add_material(self,mat):
@@ -96,6 +98,26 @@ class WallConfigData:
 
 
 
+    def add_preset_room(self, room):
+        self.rooms[room.name]=room
+
+    def remove_preset_room(self, room_name):
+        try:
+            self.rooms.pop(room_name)
+        except ValueError:
+            return False
+        else:
+            return True
+
+    def get_room(self, room_name):
+        return self.rooms[room_name]
+
+    def get_room_names_list(self):
+        return list(self.rooms.keys())
+
+    def get_default_room(self):
+        return self.rooms[self.get_room_names_list()[0]]
+
     def write_to_file(self, pathname, file):
         print("Writing config to %s" % pathname)
         # for name, mat in self.materials.items():
@@ -142,6 +164,10 @@ DefaultConfig.add_preset_wall("Isolation intérieur laine de bois", [(0.15, "Lai
 DefaultConfig.add_preset_wall("Isolation intérieur laine de verre", [(0.15, "Laine de verre"), (0.4, "Béton")])
 DefaultConfig.add_preset_wall("Isolation intérieur laine de bois + BA13", [(0.013, "BA13"),(0.15, "Laine de bois"), (0.4, "Béton")])
 DefaultConfig.add_preset_wall("Béton seul", [(0.4, "Béton")])
+
+
+
+DefaultConfig.add_preset_room(Room(h=2.5, shape=(5,5), heating_power=150, name="Pièce par défault"))
 
 
 
