@@ -5,9 +5,9 @@ class MyLocalizer(Localizer):
 
     def __init__(self):
         Localizer.__init__(self)
-        self.add_lang("fr")
-        self.add_lang("en")
 
+        self.add_lang("en")
+        self.add_lang("fr")
 
         self.texts["en"]["menu_file"]="File"
         self.texts["fr"]["menu_file"]="Fichier"
@@ -48,17 +48,16 @@ class MyLocalizer(Localizer):
         self.texts["en"]["button_statio_tooltip"]="Go directly to the temperature profile established after a long time "
         self.texts["fr"]["button_statio_tooltip"]="Avance la simulation jusqu'à l'état stationnaire."
 
+        # self.texts["en"]["button_statio_tooltip"]="Go directly to the temperature profile established after a long time "
+        # self.texts["fr"]["button_statio_tooltip"]="Avance la simulation jusqu'à l'état stationnaire."
+
         self.texts["en"]["button_edit"]="Edit"
         self.texts["fr"]["button_edit"]="Editer"
 
         self.texts["en"]["button_edit_confirm"]="Confirm"
         self.texts["fr"]["button_edit_confirm"]="Confirmer"
 
-        self.texts["en"]["button_add"]="Add layer"
-        self.texts["fr"]["button_add"]="Ajouter couche"
 
-        self.texts["en"]["button_remove"]="Remove layer"
-        self.texts["fr"]["button_remove"]="Retirer couche"
 
         self.texts["en"]["button_load"]="Load ->"
         self.texts["fr"]["button_load"]="Charger ->"
