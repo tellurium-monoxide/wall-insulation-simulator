@@ -22,8 +22,8 @@ from .materials import Material
 from .layered_wall import Wall
 
 
-NPOINT_PREFERRED_PER_LAYER=20
-NPOINT_MINIMAL_PER_LAYER=10
+NPOINT_PREFERRED_PER_LAYER=10
+NPOINT_MINIMAL_PER_LAYER=5
 
 
 
@@ -82,10 +82,30 @@ class SolverHeatEquation1dMultilayer:
         self.this_run_time=0
         self.this_run_updates=0
 
+        self.method="implicit"
 
     def remesh(self):
+        if self.method=="implicit":
+            self.remesh_implicit()
+        elif self.method=="explicit":
+            self.remesh_explicit()
+    def remesh_explicit(self):
         current_length=0
         self.time=0
+
+        # best_dt=min(self.wall.layers, key = lambda x:x.Npoints)
+        # if len(self.wall.layers)>0:
+            # best_dt=max([ (layer.e/NPOINT_PREFERRED_PER_LAYER)**2 * self.courant / layer.mat.D for layer in self.wall.layers])
+        # else:
+            # best_dt=0
+        # self.dt=best_dt
+
+        if len(self.wall.layers)>0:
+            worst_layer=min(self.wall.layers, key = lambda l: (l.e * (self.courant/l.mat.D)**0.5))
+            self.dt = (worst_layer.e/NPOINT_MINIMAL_PER_LAYER)**2 * self.courant / worst_layer.mat.D
+        else:
+            self.dt=0
+
         for i in range(len(self.wall.layers)):
             layer=self.wall.layers[i]
 
@@ -107,17 +127,52 @@ class SolverHeatEquation1dMultilayer:
             self.steps_to_statio = self.time_to_statio/self.dt
         self.vmaxabs=0
 
+        # if (len(self.wall.layers))>0:
+            # layerNmin=min(self.wall.layers, key = lambda x:x.Npoints)
+            # if layerNmin.Npoints<NPOINT_MINIMAL_PER_LAYER:
+                # dt= (layerNmin.e/NPOINT_MINIMAL_PER_LAYER)**2 * self.courant / layerNmin.mat.D
+                # self.set_time_step(dt)
+
+
+    def remesh_implicit(self):
+        current_length=0
+        self.time=0
+        self.dt=100
+
+        if len(self.wall.layers)>0:
+            min_width= min([l.e for l in self.wall.layers])
+        else:
+            min_width=0
+
+        for i in range(len(self.wall.layers)):
+            layer=self.wall.layers[i]
+
+            dx = self.dt
+
+
+            layer.Npoints= NPOINT_PREFERRED_PER_LAYER #* int(layer.e / min_width)
+            layer.Npoints= 5
+            layer.xmesh=np.linspace(current_length,current_length+layer.e,layer.Npoints)
+
+            layer.dx=layer.xmesh[1]-layer.xmesh[0]
+            layer.Tmesh=np.zeros(layer.Npoints)
+
+            current_length+=layer.e
+            self.wall.layers[i]=layer
+        self.time_to_statio=0
+        self.steps_to_statio=0
+        self.limiter_ratio=5
+        if len(self.wall.layers)>0:
+            self.time_to_statio=max([layer.e**2/layer.mat.D for layer in self.wall.layers])
+            self.steps_to_statio = self.time_to_statio/self.dt
+        self.vmaxabs=0
+
+
 
     def add_layer(self, layer):
         self.wall.add_layer(layer)
+        self.remesh()
 
-        dt= (layer.e/NPOINT_PREFERRED_PER_LAYER)**2 * self.courant / layer.mat.D
-        self.set_time_step(dt)
-        # layerNmax=max(self.wall.layers, key = lambda x:x.Npoints)
-        layerNmin=min(self.wall.layers, key = lambda x:x.Npoints)
-        if layerNmin.Npoints<5:
-            dt= (layerNmin.e/NPOINT_MINIMAL_PER_LAYER)**2 * self.courant / layerNmin.mat.D
-            self.set_time_step(dt)
 
 
     def remove_layer(self):
@@ -129,6 +184,8 @@ class SolverHeatEquation1dMultilayer:
             self.remove_layer()
         for layer in new_layers:
             self.add_layer(layer)
+        self.remesh()
+
 
 
 
@@ -292,10 +349,9 @@ class SolverHeatEquation1dMultilayer:
 
 
 
-    def advance_time(self):
+    def advance_time_explicit(self):
 
         self.time+=self.dt
-
         updated_temp=[]
         for i in range(len(self.wall.layers)):
             layer=self.wall.layers[i]
@@ -305,30 +361,10 @@ class SolverHeatEquation1dMultilayer:
 
             laplaT[0] = (T[0] - 2 *T[1] + T[2]) / (layer.dx)**2
             laplaT[-1] = (T[-1] - 2 *T[-2] + T[-3]) / (layer.dx)**2
-            flux_interfaces=np.zeros(len(T))
-
-            # ~ if i==0:
-                # ~ flux_interfaces[0]=0*-layer.mat.D *(T[0]-self.Tint)/layer.dx
-            # ~ else:
-                # ~ layerleft=self.wall.layers[i-1]
-                # ~ Tleft=layerleft.Tmesh
-                # ~ F_loc=layer.mat.D * (T[1] -2*T[0] + layerleft.Tmesh[-2])/layer.dx**2
-                # ~ F_left=layerleft.mat.D * (layerleft.Tmesh[-1]-2*layerleft.Tmesh[-2]+layerleft.Tmesh[-3]) / layerleft.dx**2
-                # ~ flux_interfaces[0]= ( F_loc + 0* F_left)
-                # ~ beta=layerleft.mat.D * (Tleft[-1]-Tleft[-2]) / layerleft.dx
-                # ~ flux_interfaces[0]= -((T[1]-T[0]) - layerleft.mat.rhoCp/layer.mat.rhoCp * (Tleft[-1]-Tleft[-2]))/self.dt
-            # ~ if i==len(self.wall.layers)-1:
-                # ~ flux_interfaces[-1]=0*layer.mat.D *(self.Tout-T[-1])/layer.dx**2
-            # ~ else:
-                # ~ layerright=self.wall.layers[i+1]
-                # ~ Tright=layerright.Tmesh
-                # ~ F_loc=layer.mat.D * (T[-2]-2*T[-1]+layerright.Tmesh[1])/layer.dx
-                # ~ F_right= layerright.mat.D * (layerright.Tmesh[0]-2*layerright.Tmesh[1]+layerright.Tmesh[2])/layerright.dx**2
-                # ~ flux_interfaces[-1]= ( 0*F_right +  F_loc)
-                # ~ flux_interfaces[-1]= -((T[-1]-T[-2]) - layerright.mat.rhoCp/layer.mat.rhoCp * (Tright[1]-Tright[0]))/self.dt
 
 
-            Tup=T + self.dt *  (layer.mat.D * laplaT + flux_interfaces)
+
+            Tup=T + self.dt *  (layer.mat.D * laplaT)
 
 # =============================================================================
 #             apply boundary conditions
@@ -358,38 +394,127 @@ class SolverHeatEquation1dMultilayer:
         for i in range(len(self.wall.layers)):
             self.wall.layers[i].Tmesh=updated_temp[i]
 
-        # ~ for i in range(len(self.wall.layers)):
-            # ~ layer=self.wall.layers[i]
-            # ~ if i>0:
-                # ~ layerleft=self.wall.layers[i-1]
-                # ~ Tleft=layerleft.Tmesh
+    def advance_time_implicit(self):
 
-                # ~ r = layerleft.mat.la / layer.mat.la
-                # ~ self.wall.layers[i].Tmesh[0]=1 / (1+r) * ( self.wall.layers[i].Tmesh[1] + r * Tleft[-2])
-            # ~ if i<len(self.wall.layers)-1:
-                # ~ layerright=self.wall.layers[i+1]
-                # ~ Tright=layerright.Tmesh
+        self.time+=self.dt
+        updated_temp=[]
+        nl=len(self.wall.layers)
+        Ntot = sum([layer.Npoints for layer in self.wall.layers]) - nl+1
+        M=np.zeros((Ntot,Ntot))
+        Tglob=np.zeros(Ntot)
+        lid=0
+        for i in range(nl):
+            layer=self.wall.layers[i]
+            T=layer.Tmesh
+            n=len(T)
+            Kl=np.zeros((n,n))
+            Tr=np.zeros(n)
 
-                # ~ r = layerright.mat.la / layer.mat.la
-                # ~ self.wall.layers[i].Tmesh[-1] = 1 / (1+r) * (self.wall.layers[i].Tmesh[-2] + r * Tright[1])
 
 
+            # Kl[0,0]=1
+            # Kl[0,1]=-2
+            # Kl[0,2]=1
+            # Kl[-1,-1]=1
+            # Kl[-1,-2]=-2
+            # Kl[-1,-3]=1
+            for p in range(1,n-1):
+                Kl[p,p]=-2
+                Kl[p,p-1]=1
+                Kl[p,p+1]=1
+
+            Ml= np.eye(n) - self.dt * layer.mat.D * Kl / layer.dx**2
+
+            Tr[1:-1]=T[1:-1]
+            if i==0:
+                Tr[0]=self.Tint
+                Ml[0,0]=1
+            else:
+                # layerleft=self.wall.layers[i-1]
+                Tr[0]=0
+                Ml[0,0]=-3/2 * layer.mat.la / layer.dx
+                Ml[0,1]=4/2 * layer.mat.la / layer.dx
+                Ml[0,2]=-1/2  * layer.mat.la / layer.dx
+                # Ml[0,1]=4/2 * layer.mat.la / layer.dx
+                # Ml[0,2]=-1/2  * layer.mat.la / layer.dx
+            if i==nl-1:
+                Tr[-1]=self.Tout
+                Ml[-1,-1]=1
+            else:
+                Tr[-1]=0
+                Ml[-1,-3]=3/2 * layer.mat.la / layer.dx
+                Ml[-1,-2]=-4/2  * layer.mat.la / layer.dx
+                Ml[-1,-1]=1/2  * layer.mat.la / layer.dx
+                # Ml[-1,-2]=4/2  * layer.mat.la / layer.dx
+                # Ml[-1,-1]=-1/2  * layer.mat.la / layer.dx
+            M[lid:lid+n,lid:lid+n] = M[lid:lid+n,lid:lid+n]+Ml
+            Tglob[lid:lid+n] = Tglob[lid:lid+n]+Tr
+            # Tup = np.linalg.solve(M,T)
+            lid+=n-1
+
+
+        Tup= np.linalg.solve(M, Tglob)
+
+
+
+
+# =============================================================================
+#             apply boundary conditions
+# =============================================================================
+            # if i==0:
+                # Tup[0] = self.Tint
+            # else:
+                # layerleft=self.wall.layers[i-1]
+                # Tleft=layerleft.Tmesh
+
+                # r = (layerleft.mat.la/layerleft.dx) / (layer.mat.la/layer.dx)
+                # Tup[0]=1 / (1+r) * ( T[1] + r * Tleft[-2])
+
+            # if i==len(self.wall.layers)-1:
+                # Tup[-1] = self.Tout
+            # else:
+                # layerright=self.wall.layers[i+1]
+                # Tright=layerright.Tmesh
+
+                # r = (layerright.mat.la/layerright.dx) / (layer.mat.la/layer.dx)
+                # Tup[-1] = 1 / (1+r) * (T[-2] + r * Tright[1])
+
+
+
+            # updated_temp.append(Tup)
+
+        lid=0
+        for i in range(nl):
+            layer=self.wall.layers[i]
+            n=layer.Npoints
+            self.wall.layers[i].Tmesh=Tup[lid:lid+n]
+            lid+=n-1
+
+
+    def advance_time(self):
+        if self.method=="implicit":
+            self.advance_time_implicit()
+        elif self.method=="explicit":
+            self.advance_time_explicit()
 
     def update_loop(self):
         time_new_redraw=time.perf_counter_ns()
         self.time_since_redraw=time_new_redraw-self.time_last_redraw
         while self.run_sim:
             time.sleep(0.00001)
+
+
             time_new_redraw=time.perf_counter_ns()
             self.time_since_redraw=time_new_redraw-self.time_last_redraw
-            needRedraw=self.time_since_redraw < 50*1000000 # 50 is main_panel.timer_update_redraw.GetInterval()
+            needRedraw=self.time_since_redraw > 50*1000000 # 50 is main_panel.timer_update_redraw.GetInterval()
 
             isTooFast=self.time_since_redraw > 0 and self.updates_since_redraw/self.time_since_redraw*1e9 > self.steps_to_statio/self.limiter_ratio
-            if  needRedraw and not(isTooFast):
+            if  not(needRedraw) and not(isTooFast):
                 self.advance_time()
                 self.updates_since_redraw+=1
-            # ~ elif isTooFast:
-                # ~ print("limiting updates per sec")
+
+                # ~ elif isTooFast:
+                    # ~ print("limiting updates per sec")
 
 
 
