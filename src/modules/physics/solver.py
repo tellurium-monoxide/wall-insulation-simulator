@@ -23,7 +23,7 @@ from .layered_wall import Wall
 
 
 NPOINT_PREFERRED_PER_LAYER=10
-NPOINT_MINIMAL_PER_LAYER=8
+NPOINT_MINIMAL_PER_LAYER=4
 
 LIMITER_RATIO = 2
 
@@ -147,12 +147,12 @@ class SolverHeatEquation1dMultilayer:
     def remesh_implicit(self):
         current_length=0
         self.time=0
-        self.dt=120
+        self.dt=60
 
         if len(self.wall.layers)>0:
             min_width= min([l.e for l in self.wall.layers])
         else:
-            min_width=0
+            min_width=1
 
         for i in range(len(self.wall.layers)):
             layer=self.wall.layers[i]
@@ -160,8 +160,12 @@ class SolverHeatEquation1dMultilayer:
             dx = self.dt
 
 
-            layer.Npoints= NPOINT_PREFERRED_PER_LAYER #* int(layer.e / min_width)
-            # layer.Npoints= 5
+
+            layer.Npoints=  int(NPOINT_MINIMAL_PER_LAYER * (1+np.log(layer.e / min_width)))
+            # print(layer.Npoints)
+            # layer.Npoints=  NPOINT_PREFERRED_PER_LAYER
+            # layer.Npoints=  NPOINT_MINIMAL_PER_LAYER
+
             layer.xmesh=np.linspace(current_length,current_length+layer.e,layer.Npoints)
 
             layer.dx=layer.xmesh[1]-layer.xmesh[0]
@@ -357,7 +361,7 @@ class SolverHeatEquation1dMultilayer:
 
 
     def advance_time_explicit(self):
-
+        self.update_Tint()
         self.time+=self.dt
         updated_temp=[]
         for i in range(len(self.wall.layers)):
@@ -403,13 +407,27 @@ class SolverHeatEquation1dMultilayer:
 
     def advance_time_implicit(self):
 
+        alpha=0.5
+
         self.time+=self.dt
         updated_temp=[]
         nl=len(self.wall.layers)
-        Ntot = sum([layer.Npoints for layer in self.wall.layers]) - nl+1
+        Ntot = sum([layer.Npoints for layer in self.wall.layers]) - nl+1 + 1
         M=np.zeros((Ntot,Ntot))
         Tglob=np.zeros(Ntot)
-        lid=0
+
+        l0=self.wall.layers[0]
+        coef=self.Tint_is_variable * self.dt *  l0.mat.la/ l0.dx * self.wall.room.surface /self.wall.room.heat_capacity
+        M[0,0]=1
+        M[0,1]=  alpha *coef
+        M[0,2]= - alpha *coef
+
+        Tglob[0]=self.Tint + self.Tint_is_variable * self.dt * self.wall.room.heating_power /self.wall.room.heat_capacity
+        Tglob[0]+= (1-alpha) * coef * (l0.Tmesh[1] - l0.Tmesh[0])
+
+        M[1,0]=   -1
+
+        lid=1
         for i in range(nl):
             layer=self.wall.layers[i]
             T=layer.Tmesh
@@ -418,42 +436,37 @@ class SolverHeatEquation1dMultilayer:
             Tr=np.zeros(n)
 
 
-
-            # Kl[0,0]=1
-            # Kl[0,1]=-2
-            # Kl[0,2]=1
-            # Kl[-1,-1]=1
-            # Kl[-1,-2]=-2
-            # Kl[-1,-3]=1
             for p in range(1,n-1):
                 Kl[p,p]=-2
                 Kl[p,p-1]=1
                 Kl[p,p+1]=1
 
-            Ml= np.eye(n) - self.dt * layer.mat.D * Kl / layer.dx**2
+            Ml= np.eye(n) - alpha * self.dt * layer.mat.D * Kl / layer.dx**2
 
-            Tr[1:-1]=T[1:-1]
+            Trhs_loc=(np.eye(n) + (1-alpha) * self.dt * layer.mat.D * Kl / layer.dx**2).dot(T)
+
+            Tr[1:-1]=Trhs_loc[1:-1]
             if i==0:
-                Tr[0]=self.Tint
+                Tr[0]=0
                 Ml[0,0]=1
             else:
                 # layerleft=self.wall.layers[i-1]
                 Tr[0]=0
-                Ml[0,0]=-3/2 * layer.mat.la / layer.dx
-                Ml[0,1]=4/2 * layer.mat.la / layer.dx
-                Ml[0,2]=-1/2  * layer.mat.la / layer.dx
-                # Ml[0,1]=-1 * layer.mat.la / layer.dx
-                # Ml[0,2]=1  * layer.mat.la / layer.dx
+                # Ml[0,0]=-3/2 * layer.mat.la / layer.dx
+                # Ml[0,1]=4/2 * layer.mat.la / layer.dx
+                # Ml[0,2]=-1/2  * layer.mat.la / layer.dx
+                Ml[0,0]=-1 * layer.mat.la / layer.dx
+                Ml[0,1]=1  * layer.mat.la / layer.dx
             if i==nl-1:
                 Tr[-1]=self.Tout
                 Ml[-1,-1]=1
             else:
                 Tr[-1]=0
-                Ml[-1,-3]=3/2 * layer.mat.la / layer.dx
-                Ml[-1,-2]=-4/2  * layer.mat.la / layer.dx
-                Ml[-1,-1]=1/2  * layer.mat.la / layer.dx
-                # Ml[-1,-2]=1  * layer.mat.la / layer.dx
-                # Ml[-1,-1]=-1  * layer.mat.la / layer.dx
+                # Ml[-1,-3]=3/2 * layer.mat.la / layer.dx
+                # Ml[-1,-2]=-4/2  * layer.mat.la / layer.dx
+                # Ml[-1,-1]=1/2  * layer.mat.la / layer.dx
+                Ml[-1,-2]=1  * layer.mat.la / layer.dx
+                Ml[-1,-1]=-1  * layer.mat.la / layer.dx
             M[lid:lid+n,lid:lid+n] = M[lid:lid+n,lid:lid+n]+Ml
             Tglob[lid:lid+n] = Tglob[lid:lid+n]+Tr
             # Tup = np.linalg.solve(M,T)
@@ -463,34 +476,8 @@ class SolverHeatEquation1dMultilayer:
         Tup= np.linalg.solve(M, Tglob)
 
 
-
-
-# =============================================================================
-#             apply boundary conditions
-# =============================================================================
-            # if i==0:
-                # Tup[0] = self.Tint
-            # else:
-                # layerleft=self.wall.layers[i-1]
-                # Tleft=layerleft.Tmesh
-
-                # r = (layerleft.mat.la/layerleft.dx) / (layer.mat.la/layer.dx)
-                # Tup[0]=1 / (1+r) * ( T[1] + r * Tleft[-2])
-
-            # if i==len(self.wall.layers)-1:
-                # Tup[-1] = self.Tout
-            # else:
-                # layerright=self.wall.layers[i+1]
-                # Tright=layerright.Tmesh
-
-                # r = (layerright.mat.la/layerright.dx) / (layer.mat.la/layer.dx)
-                # Tup[-1] = 1 / (1+r) * (T[-2] + r * Tright[1])
-
-
-
-            # updated_temp.append(Tup)
-
-        lid=0
+        self.Tint=Tup[0]
+        lid=1
         for i in range(nl):
             layer=self.wall.layers[i]
             n=layer.Npoints
@@ -499,7 +486,7 @@ class SolverHeatEquation1dMultilayer:
 
 
     def advance_time(self):
-        self.update_Tint()
+
         if self.method=="implicit":
             self.advance_time_implicit()
         elif self.method=="explicit":
@@ -537,8 +524,9 @@ class SolverHeatEquation1dMultilayer:
 
             newT= self.Tint + dT
 
-            if newT> self.Tmin and newT<self.Tmax :
-                self.Tint=newT
+            # if newT> self.Tmin and newT<self.Tmax :
+                # self.Tint=newT
+            self.Tint=newT
 
     def compute_heat_loss(self):
         phi = self.compute_phi()
