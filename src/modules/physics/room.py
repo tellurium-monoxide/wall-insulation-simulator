@@ -19,6 +19,8 @@ class Room:
 
         self.heat_capacity = self.volume * self.rhoCp
 
+        self.heating_rate = self.heating_power / (self.heat_capacity)
+
     def compute_temperature_loss_rate(self, phi):
 
         # we want to return the temperature loss over time in K/s

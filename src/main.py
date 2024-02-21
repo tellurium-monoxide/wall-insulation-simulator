@@ -66,22 +66,26 @@ class FigureWithTemperatureSliders(wx.Panel):
         self.localizer=parent.localizer
 
 
+
+
         self.slider_Tint=wx.Slider(self,value=self.solver.Tint,minValue=self.solver.Tmin, maxValue=self.solver.Tmax, style=wx.SL_VALUE_LABEL | wx.SL_VERTICAL | wx.SL_INVERSE| wx.SL_AUTOTICKS, name="Tint")
         self.panelfig = PanelAnimatedFigure(self, self.solver.figure)
         self.slider_Tout=wx.Slider(self,value=self.solver.Tout,minValue=self.solver.Tmin, maxValue=self.solver.Tmax, style=wx.SL_VALUE_LABEL | wx.SL_VERTICAL | wx.SL_LEFT | wx.SL_INVERSE| wx.SL_AUTOTICKS, name="Tout")
 
-
+        self.ctrl_inside_temp = ControlInsideTemp(self, self.slider_Tint)
 
         # create a FlexGridSizer to position the figure, sliders...
-        sizer_grid = wx.FlexGridSizer(2,3,10,10)
+        sizer_grid = wx.FlexGridSizer(2,4,10,10)
         sizer_grid.AddGrowableRow(1, proportion=1)
-        sizer_grid.AddGrowableCol(1, proportion=1)
+        sizer_grid.AddGrowableCol(2, proportion=1)
         # sizer_h_fig_sliders.AddGrowableCol(3, proportion=1)
 
         # add content to the sizer
+        sizer_grid.Add(wx.StaticText(self,label="Room heating"),1, wx.ALIGN_CENTER_HORIZONTAL)
         sizer_grid.Add(wx.StaticText(self,label="Tint (°C)"),1, wx.ALIGN_CENTER_HORIZONTAL)
         sizer_grid.Add(wx.StaticText(self,label="Temperature graph") ,1, wx.ALIGN_CENTER_HORIZONTAL)
         sizer_grid.Add(wx.StaticText(self,label="Text (°C)"),1, wx.ALIGN_CENTER_HORIZONTAL)
+        sizer_grid.Add(self.ctrl_inside_temp, 0,wx.EXPAND)
         sizer_grid.Add(self.slider_Tint, 0,wx.EXPAND)
         sizer_grid.Add(self.panelfig, 1,wx.EXPAND)
         sizer_grid.Add(self.slider_Tout, 0, wx.EXPAND)
@@ -90,14 +94,18 @@ class FigureWithTemperatureSliders(wx.Panel):
 
 
         # Bindings
+        self.slider_Tint.Bind(wx.EVT_SLIDER, self.on_slide_Tint)
+        self.slider_Tout.Bind(wx.EVT_SLIDER, self.on_slide_Tout)
 
-        # event = eventWallSetupChanged(wx.NewIdRef())
-        # wx.PostEvent(self, event)
-        # if not(self.solver.run_sim):
-            # self.redraw()
-    def redraw(self):
-        self.solver.draw()
-        self.panelfig.LoadFigure(self.solver.figure)
+    def on_slide_Tint(self,event):
+        Tint= self.slider_Tint.GetValue()
+        self.solver.set_inside_temp(Tint)
+
+
+    def on_slide_Tout(self,event):
+        Tout= self.slider_Tout.GetValue()
+        self.solver.set_outside_temp(Tout)
+
 
 class PanelSolverInfo(wx.Panel):
     def __init__(self, parent):
@@ -143,8 +151,8 @@ class PanelSolverInfo(wx.Panel):
         self.info_Rth.SetLabel("Total thermal resistance = %g K.m²/W" % Rth)
         phi_int_to_solver=solver.compute_phi()
         self.info_phi.SetLabel("Thermal flux from interior to wall = %g W/m²" % phi_int_to_solver)
-        phi_int_to_out = (solver.Tout-solver.Tint) / Rth
-        self.info_phi2.SetLabel("Thermal flux from interior to out  = %g W/m²" % phi_int_to_out)
+        phi_int_to_out = -(solver.Tout-solver.Tint) / Rth
+        self.info_phi2.SetLabel("Thermal flux at equilibrium = %g W/m²" % phi_int_to_out)
         Nx= sum([layer.Npoints for layer in solver.wall.layers])
         text_nx="Nx= %d (" % Nx + str([layer.Npoints for layer in solver.wall.layers]) + ")"
         self.info_Nx.SetLabel(text_nx)
@@ -248,11 +256,11 @@ class MainPanel(wx.Panel):
 
         # sizer_h_fig_sliders.Add(self.panel_info, 1, wx.EXPAND)
 
-        self.ctrl_inside_temp = ControlInsideTemp(self)
+
 
         sizer_h = wx.BoxSizer(wx.HORIZONTAL)
 
-        sizer_h.Add(self.ctrl_inside_temp, 0, wx.EXPAND, 0)
+        # sizer_h.Add(self.ctrl_inside_temp, 0, wx.EXPAND, 0)
         sizer_h.Add(self.panel_fig_sliders, 1, wx.EXPAND, 0)
         sizer_h.Add(self.panel_info)
 
@@ -284,9 +292,6 @@ class MainPanel(wx.Panel):
 
 
         self.Bind(wx.EVT_TIMER, self.on_timer_redraw, self.timer_update_redraw)
-
-        self.panel_fig_sliders.slider_Tint.Bind(wx.EVT_SLIDER, self.on_slide_Tint)
-        self.panel_fig_sliders.slider_Tout.Bind(wx.EVT_SLIDER, self.on_slide_Tout)
 
         self.Bind(EVT_WALL_SETUP_CHANGED, self.on_wall_setup_change)
 
@@ -357,28 +362,11 @@ class MainPanel(wx.Panel):
 
 
 
-    def on_slide_Tint(self,event):
-        Tint= self.panel_fig_sliders.slider_Tint.GetValue()
-        self.solver.set_inside_temp(Tint)
-        # if not(self.solver.run_sim):
-            # self.redraw()
-        # event = eventWallSetupChanged(wx.NewIdRef())
-        # wx.PostEvent(self, event)
-        # if not(self.solver.run_sim):
-            # self.redraw()
-
-    def on_slide_Tout(self,event):
-        Tout= self.panel_fig_sliders.slider_Tout.GetValue()
-        self.solver.set_outside_temp(Tout)
-        # if not(self.solver.run_sim):
-            # self.redraw()
-
-
     def redraw(self):
         self.panel_info.update_info(self.solver)
         self.solver.draw()
         self.panel_fig_sliders.panelfig.LoadFigure(self.solver.figure)
-        self.ctrl_inside_temp.update()
+        self.panel_fig_sliders.ctrl_inside_temp.update()
 
 
 

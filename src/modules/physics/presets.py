@@ -163,11 +163,12 @@ DefaultConfig.add_material(Material(la=0.024,Cp=1000, rho=1.2, name="Air"))
 DefaultConfig.add_preset_wall("Isolation intérieur laine de bois", [(0.15, "Laine de bois"), (0.4, "Béton")])
 DefaultConfig.add_preset_wall("Isolation intérieur laine de verre", [(0.15, "Laine de verre"), (0.4, "Béton")])
 DefaultConfig.add_preset_wall("Isolation intérieur laine de bois + BA13", [(0.013, "BA13"),(0.15, "Laine de bois"), (0.4, "Béton")])
+DefaultConfig.add_preset_wall("Isolation intérieur laine de bois + BA13 + air", [(0.013, "BA13"),(0.01, "Air"),(0.15, "Laine de bois"), (0.4, "Béton")])
 DefaultConfig.add_preset_wall("Béton seul", [(0.4, "Béton")])
 
 
 
-DefaultConfig.add_preset_room(Room(h=2.5, shape=(5,5), heating_power=150, name="Pièce par défault"))
+DefaultConfig.add_preset_room(Room(h=2.5, shape=(5,5), heating_power=0, name="Pièce par défault"))
 
 
 

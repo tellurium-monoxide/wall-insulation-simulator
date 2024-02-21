@@ -7,14 +7,14 @@ from ..controls_numeric_values.bounded_value import CtrlPositiveBoundedDecimal
 
 class ControlInsideTemp(wx.Panel):
 
-    def __init__(self, parent):
+    def __init__(self, parent, slider_Tint):
         wx.Panel.__init__(self, parent)
 
         self.parent=parent
         self.solver=parent.solver
         self.localizer=parent.localizer
 
-
+        self.slider_Tint=slider_Tint
 
         # content:
 
@@ -27,51 +27,74 @@ class ControlInsideTemp(wx.Panel):
         sizer_h0.AddMany(toadd)
         # room geometry:
 
-        hsp= wx.StaticText(self, label="Hsp = ")
+
         hsp_input= CtrlPositiveBoundedDecimal(self, min_value=1, max_value=20)
-        hsp_unit= wx.StaticText(self, label="m")
-
-
-        sizer_h1 = wx.BoxSizer(wx.HORIZONTAL)
-
-        toadd= [ (w, 0, wx.ALIGN_CENTER, 0) for w in [hsp,hsp_input,hsp_unit]]
-        sizer_h1.AddMany(toadd)
-
-        txt= wx.StaticText(self, label="Murs : ")
         l1_input= CtrlPositiveBoundedDecimal(self, min_value=1, max_value=20)
-        xtxt= wx.StaticText(self, label="x")
         l2_input= CtrlPositiveBoundedDecimal(self, min_value=1, max_value=20)
-        len_unit= wx.StaticText(self, label="m")
 
-        sizer_h2 = wx.BoxSizer(wx.HORIZONTAL)
-        toadd= [ (w, 0, wx.ALIGN_CENTER, 0) for w in [txt,l1_input,xtxt,l2_input,len_unit]]
-        sizer_h2.AddMany(toadd)
+
+
+        sizer_h1 = wx.FlexGridSizer(2,6, 0, 0)
+
+        sizer_h1.Add(wx.StaticText(self, label=""), 0, wx.ALIGN_CENTER, 0)
+        sizer_h1.Add(wx.StaticText(self, label="h"), 0, wx.ALIGN_CENTER, 0)
+        sizer_h1.Add(wx.StaticText(self, label=""), 0, wx.ALIGN_CENTER, 0)
+        sizer_h1.Add(wx.StaticText(self, label="L"), 0, wx.ALIGN_CENTER, 0)
+        sizer_h1.Add(wx.StaticText(self, label=""), 0, wx.ALIGN_CENTER, 0)
+        sizer_h1.Add(wx.StaticText(self, label="l"), 0, wx.ALIGN_CENTER, 0)
+
+        sizer_h1.Add(wx.StaticText(self, label="Dim:"), 0, wx.ALIGN_CENTER, 0)
+        sizer_h1.Add(hsp_input, 0, wx.ALIGN_CENTER, 0)
+        sizer_h1.Add(wx.StaticText(self, label="x"), 0, wx.ALIGN_CENTER, 0)
+        sizer_h1.Add(l1_input, 0, wx.ALIGN_CENTER, 0)
+        sizer_h1.Add(wx.StaticText(self, label="x"), 0, wx.ALIGN_CENTER, 0)
+        sizer_h1.Add(l2_input, 0, wx.ALIGN_CENTER, 0)
+
+
+
+
+
 
         # heating and current heat loss indicator:
 
+        heat_gain_leg=wx.StaticText(self, label="P_heater (W)", style = wx.ALIGN_CENTRE_HORIZONTAL)
+        heat_loss_leg=wx.StaticText(self, label="P_lost (W)", style = wx.ALIGN_CENTRE_HORIZONTAL)
+
         wx_sl_style = wx.SL_LABELS | wx.SL_VERTICAL | wx.SL_INVERSE
-        heat_gain_leg=wx.StaticText(self, label="P_heater", style = wx.ALIGN_CENTRE_HORIZONTAL)
         self.slider_heat_gain=wx.Slider(self,value=0,minValue=-100, maxValue=100, style=wx_sl_style)
-        heat_loss_leg=wx.StaticText(self, label="P_lost", style = wx.ALIGN_CENTRE_HORIZONTAL)
-        self.slider_heat_loss=wx.Slider(self,value=0,minValue=self.solver.Tmin, maxValue=self.solver.Tmax, style=wx_sl_style | wx.SL_LEFT , name="Tout")
+        self.slider_heat_loss=wx.Slider(self,value=0,minValue=-100, maxValue=100, style=wx_sl_style | wx.SL_LEFT)
+
         self.slider_heat_gain.Disable()
         self.slider_heat_loss.Disable()
-        self.slider_heat_gain.SetPageSize(1)
+
         self.slider_heat_gain.SetToolTip("Set the heating power (in Watts). You can use the keyboard arrows after clicking the slider to set it precisely.")
 
 
 
 
-        sizer_h3 = wx.FlexGridSizer(2,2, 0, 0)
+        sizer_h3 = wx.FlexGridSizer(2,5, 0, 0)
         sizer_h3.AddGrowableRow(1, proportion=1)
-        toadd= [ (w, 1, wx.EXPAND, 0) for w in [heat_gain_leg,heat_loss_leg, self.slider_heat_gain, self.slider_heat_loss]]
-        sizer_h3.AddMany(toadd)
+        sizer_h3.AddGrowableCol(0, proportion=1)
+        sizer_h3.AddGrowableCol(2, proportion=1)
+        sizer_h3.AddGrowableCol(4, proportion=1)
+
+        sizer_h3.Add(wx.StaticText(self, label=""), 0, wx.ALIGN_CENTER, 0)
+        sizer_h3.Add(heat_gain_leg, 0, wx.ALIGN_RIGHT, 0)
+        sizer_h3.Add(wx.StaticText(self, label=""), 0, wx.ALIGN_CENTER, 0)
+        sizer_h3.Add(heat_loss_leg, 0, wx.ALIGN_LEFT, 0)
+        sizer_h3.Add(wx.StaticText(self, label=""), 0, wx.ALIGN_CENTER, 0)
+
+        sizer_h3.Add(wx.StaticText(self, label=""), 0, wx.ALIGN_CENTER, 0)
+        sizer_h3.Add(self.slider_heat_gain, 0, wx.EXPAND, 0)
+        sizer_h3.Add(wx.StaticText(self, label=""), 0, wx.ALIGN_CENTER, 0)
+        sizer_h3.Add(self.slider_heat_loss, 0, wx.EXPAND , 0)
+        sizer_h3.Add(wx.StaticText(self, label=""), 0, wx.ALIGN_CENTER, 0)
 
         sizer_v = wx.BoxSizer(wx.VERTICAL)
 
 
 
-        sizer_v.AddMany([sizer_h0,sizer_h1, (sizer_h2, 0, wx.EXPAND, 0), (sizer_h3, 1, wx.EXPAND, 0)])
+        sizer_v.AddMany([sizer_h0,sizer_h1, (sizer_h3, 1, wx.EXPAND, 0)])
 
 
 
@@ -79,6 +102,10 @@ class ControlInsideTemp(wx.Panel):
         sizer_v.SetSizeHints(self)
         self.Layout()
 
+        # set the correct values in the inputs
+        hsp_input.SetValue(self.solver.wall.room.h)
+        l1_input.SetValue(self.solver.wall.room.shape[0])
+        l2_input.SetValue(self.solver.wall.room.shape[1])
 
         # Bindings
 
@@ -90,40 +117,47 @@ class ControlInsideTemp(wx.Panel):
     def on_check(self, event):
         self.solver.Tint_is_variable =  event.IsChecked()
         self.slider_heat_gain.Enable(enable=event.IsChecked())
-        self.GetParent().panel_fig_sliders.slider_Tint.Enable(enable=not(event.IsChecked()))
+        self.slider_Tint.Enable(enable=not(event.IsChecked()))
+        if event.IsChecked():
+            val_gain=self.slider_heat_gain.GetValue()
+            self.solver.wall.room.heating_power=val_gain
 
     def on_slide_heat_gain(self, event):
         val_gain=self.slider_heat_gain.GetValue()
         self.solver.wall.room.heating_power=val_gain
 
 
-    def update_slider_ranges(self, val):
-        val=int(val)
+    def update_slider_ranges(self):
+        Rwall = sum([l.Rth for l in self.solver.wall.layers])
+        maxpow= int((self.solver.Tmax-self.solver.Tmin) / Rwall * self.solver.wall.room.surface)
+
         vmin=self.slider_heat_loss.GetMin()
         vmax=self.slider_heat_loss.GetMax()
-        if (abs(val)> abs(vmin) or abs(val)>abs(vmax) or abs(vmax) >5 * (abs(val)+100)) and abs(val)<1e6:
-            new_val=abs(val)+10
+
+        if vmax != maxpow and vmin != maxpow:
             prev_val_gain=self.slider_heat_gain.GetValue()
             prev_val_loss=self.slider_heat_loss.GetValue()
-            self.slider_heat_gain.SetMin(-new_val)
-            self.slider_heat_gain.SetMax(new_val)
-            self.slider_heat_loss.SetMin(-new_val)
-            self.slider_heat_loss.SetMax(new_val)
-            self.slider_heat_gain.SetValue(prev_val_gain)
-            self.slider_heat_loss.SetValue(prev_val_loss)
-        return
+            self.slider_heat_gain.SetMin(-maxpow)
+            self.slider_heat_gain.SetMax(maxpow)
+            self.slider_heat_loss.SetMin(-maxpow)
+            self.slider_heat_loss.SetMax(maxpow)
+            self.slider_heat_gain.SetValue( min(maxpow, max(-maxpow, prev_val_gain)))
+            self.slider_heat_loss.SetValue( min(maxpow, max(-maxpow, prev_val_loss)))
+
+
+
 
     def update(self):
 
         heat_loss=int(self.solver.compute_heat_loss())
-        self.update_slider_ranges(heat_loss)
+        self.update_slider_ranges()
 
         if abs(heat_loss)<1e6:
             self.slider_heat_loss.SetValue(heat_loss)
         if not(self.check.IsChecked()):
             self.slider_heat_gain.SetValue(heat_loss)
         else:
-            self.GetParent().panel_fig_sliders.slider_Tint.SetValue(int(self.solver.Tint))
+            self.slider_Tint.SetValue(int(self.solver.Tint))
         self.GetParent().Layout()
 
 
