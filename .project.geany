@@ -28,16 +28,18 @@ long_line_behaviour=1
 long_line_column=72
 
 [files]
-current_page=7
-FILE_NAME_0=2732;Python;0;EUTF-8;0;1;0;Y%3A%5CDocuments%5CCode%5Cwall-insulation-simulator%5Csrc%5Cmain.py;0;4
-FILE_NAME_1=12584;Python;0;EUTF-8;0;1;0;Y%3A%5CDocuments%5CCode%5Cwall-insulation-simulator%5Csrc%5Cmodules%5Cphysics%5Csolver.py;0;4
+current_page=8
+FILE_NAME_0=1665;Python;0;EUTF-8;0;1;0;Y%3A%5CDocuments%5CCode%5Cwall-insulation-simulator%5Csrc%5Cmain.py;0;4
+FILE_NAME_1=7316;Python;0;EUTF-8;0;1;0;Y%3A%5CDocuments%5CCode%5Cwall-insulation-simulator%5Csrc%5Cmodules%5Cphysics%5Csolver.py;0;4
 FILE_NAME_2=890;Python;0;EUTF-8;0;1;0;Y%3A%5CDocuments%5CCode%5Cwall-insulation-simulator%5Csrc%5Cmodules%5Clocalizer%5Cmylocalizer.py;0;4
 FILE_NAME_3=1254;Python;0;EUTF-8;0;1;0;Y%3A%5CDocuments%5CCode%5Cwall-insulation-simulator%5Csrc%5Cmodules%5Clocalizer%5Clocalizer.py;0;4
-FILE_NAME_4=5647;Python;0;EUTF-8;0;1;0;Y%3A%5CDocuments%5CCode%5Cwall-insulation-simulator%5Csrc%5Cmodules%5Cphysics%5Cpresets.py;0;4
-FILE_NAME_5=616;Python;0;EUTF-8;0;1;0;Y%3A%5CDocuments%5CCode%5Cwall-insulation-simulator%5Csrc%5Cmodules%5Cphysics%5Croom.py;0;4
+FILE_NAME_4=5612;Python;0;EUTF-8;0;1;0;Y%3A%5CDocuments%5CCode%5Cwall-insulation-simulator%5Csrc%5Cmodules%5Cphysics%5Cpresets.py;0;4
+FILE_NAME_5=322;Python;0;EUTF-8;0;1;0;Y%3A%5CDocuments%5CCode%5Cwall-insulation-simulator%5Csrc%5Cmodules%5Cphysics%5Croom.py;0;4
 FILE_NAME_6=930;Python;0;EUTF-8;0;1;0;Y%3A%5CDocuments%5CCode%5Cwall-insulation-simulator%5Csrc%5Cmodules%5Cphysics%5Clayered_wall.py;0;4
-FILE_NAME_7=5630;Python;0;EUTF-8;0;1;0;Y%3A%5CDocuments%5CCode%5Cwall-insulation-simulator%5Csrc%5Cmodules%5Cgui%5Ctemperature_controller%5Ccontroller_inside_temp.py;0;4
-FILE_NAME_8=3931;Python;0;EUTF-8;0;1;0;Y%3A%5CDocuments%5CCode%5Cwall-insulation-simulator%5Csrc%5Cmodules%5Cgui%5Cwall_customizer%5Cpanel_wall_customizer.py;0;4
+FILE_NAME_7=5434;Python;0;EUTF-8;0;1;0;Y%3A%5CDocuments%5CCode%5Cwall-insulation-simulator%5Csrc%5Cmodules%5Cgui%5Ctemperature_controller%5Ccontroller_inside_temp.py;0;4
+FILE_NAME_8=386;Python;0;EUTF-8;0;1;0;Y%3A%5CDocuments%5CCode%5Cwall-insulation-simulator%5Csrc%5Cmodules%5Cgui%5Ctemperature_controller%5Ccontroller_outside_temp.py;0;4
+FILE_NAME_9=3931;Python;0;EUTF-8;0;1;0;Y%3A%5CDocuments%5CCode%5Cwall-insulation-simulator%5Csrc%5Cmodules%5Cgui%5Cwall_customizer%5Cpanel_wall_customizer.py;0;4
+FILE_NAME_10=2146;Python;0;EUTF-8;0;1;0;Y%3A%5CDocuments%5CCode%5Cwall-insulation-simulator%5Csrc%5Cmodules%5Cgui%5Cwall_customizer%5Clayer_choice_list.py;0;4
 
 [build-menu]
 EX_00_LB=_Execute

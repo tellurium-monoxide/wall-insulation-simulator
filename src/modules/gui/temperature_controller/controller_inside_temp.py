@@ -1,4 +1,5 @@
 
+import math
 import wx
 
 
@@ -27,28 +28,32 @@ class ControlInsideTemp(wx.Panel):
         sizer_h0.AddMany(toadd)
         # room geometry:
 
+        # self.button_edit_room=wx.ToggleButton(self, label="edit", size=(40,-1))
+        self.check_edit_room = wx.CheckBox(self)
+        self.L1_input= CtrlPositiveBoundedDecimal(self, min_value=1, max_value=20)
+        self.L2_input= CtrlPositiveBoundedDecimal(self, min_value=1, max_value=20)
+        self.hsp_input= CtrlPositiveBoundedDecimal(self, min_value=1, max_value=20)
 
-        hsp_input= CtrlPositiveBoundedDecimal(self, min_value=1, max_value=20)
-        l1_input= CtrlPositiveBoundedDecimal(self, min_value=1, max_value=20)
-        l2_input= CtrlPositiveBoundedDecimal(self, min_value=1, max_value=20)
 
-
-
-        sizer_h1 = wx.FlexGridSizer(2,6, 0, 0)
+        sizer_h1 = wx.FlexGridSizer(2,7, 0, 0)
+        sizer_h1.AddGrowableCol(6, proportion=1)
 
         sizer_h1.Add(wx.StaticText(self, label=""), 0, wx.ALIGN_CENTER, 0)
-        sizer_h1.Add(wx.StaticText(self, label="h"), 0, wx.ALIGN_CENTER, 0)
-        sizer_h1.Add(wx.StaticText(self, label=""), 0, wx.ALIGN_CENTER, 0)
+
         sizer_h1.Add(wx.StaticText(self, label="L"), 0, wx.ALIGN_CENTER, 0)
         sizer_h1.Add(wx.StaticText(self, label=""), 0, wx.ALIGN_CENTER, 0)
         sizer_h1.Add(wx.StaticText(self, label="l"), 0, wx.ALIGN_CENTER, 0)
+        sizer_h1.Add(wx.StaticText(self, label=""), 0, wx.ALIGN_CENTER, 0)
+        sizer_h1.Add(wx.StaticText(self, label="h"), 0, wx.ALIGN_CENTER, 0)
+        sizer_h1.Add(wx.StaticText(self, label="Edit"), 0, wx.ALIGN_RIGHT | wx.EXPAND, 0)
 
         sizer_h1.Add(wx.StaticText(self, label="Dim:"), 0, wx.ALIGN_CENTER, 0)
-        sizer_h1.Add(hsp_input, 0, wx.ALIGN_CENTER, 0)
+        sizer_h1.Add(self.L1_input, 0, wx.ALIGN_CENTER, 0)
         sizer_h1.Add(wx.StaticText(self, label="x"), 0, wx.ALIGN_CENTER, 0)
-        sizer_h1.Add(l1_input, 0, wx.ALIGN_CENTER, 0)
+        sizer_h1.Add(self.L2_input, 0, wx.ALIGN_CENTER, 0)
         sizer_h1.Add(wx.StaticText(self, label="x"), 0, wx.ALIGN_CENTER, 0)
-        sizer_h1.Add(l2_input, 0, wx.ALIGN_CENTER, 0)
+        sizer_h1.Add(self.hsp_input, 0, wx.ALIGN_CENTER, 0)
+        sizer_h1.Add(self.check_edit_room, 1, wx.ALIGN_RIGHT | wx.EXPAND, 0)
 
 
 
@@ -103,15 +108,34 @@ class ControlInsideTemp(wx.Panel):
         self.Layout()
 
         # set the correct values in the inputs
-        hsp_input.SetValue(self.solver.wall.room.h)
-        l1_input.SetValue(self.solver.wall.room.shape[0])
-        l2_input.SetValue(self.solver.wall.room.shape[1])
+
+        self.L1_input.SetValue(self.solver.wall.room.shape[0])
+        self.L2_input.SetValue(self.solver.wall.room.shape[1])
+        self.hsp_input.SetValue(self.solver.wall.room.shape[2])
+
+        self.hsp_input.Disable()
+        self.L1_input.Disable()
+        self.L2_input.Disable()
 
         # Bindings
 
         self.check.Bind(wx.EVT_CHECKBOX, self.on_check)
+        self.check_edit_room.Bind(wx.EVT_CHECKBOX, self.on_check_edit)
 
         self.slider_heat_gain.Bind(wx.EVT_SLIDER, self.on_slide_heat_gain)
+
+
+    def on_check_edit(self, event):
+        self.hsp_input.Enable(enable=event.IsChecked())
+        self.L1_input.Enable(enable=event.IsChecked())
+        self.L2_input.Enable(enable=event.IsChecked())
+
+        if not(event.IsChecked()):
+            h= self.hsp_input.GetValue()
+            L1= self.L1_input.GetValue()
+            L2= self.L2_input.GetValue()
+
+            self.solver.wall.room.set_shape((L1,L2,h))
 
 
     def on_check(self, event):
@@ -142,7 +166,9 @@ class ControlInsideTemp(wx.Panel):
             self.slider_heat_loss.SetMin(-maxpow)
             self.slider_heat_loss.SetMax(maxpow)
             self.slider_heat_gain.SetValue( min(maxpow, max(-maxpow, prev_val_gain)))
-            self.slider_heat_loss.SetValue( min(maxpow, max(-maxpow, prev_val_loss)))
+
+            val_gain=self.slider_heat_gain.GetValue()
+            self.solver.wall.room.heating_power=val_gain
 
 
 
@@ -150,6 +176,11 @@ class ControlInsideTemp(wx.Panel):
     def update(self):
 
         heat_loss=int(self.solver.compute_heat_loss())
+
+
+
+        # self.solver.wall.room
+
         self.update_slider_ranges()
 
         if abs(heat_loss)<1e6:
@@ -158,6 +189,8 @@ class ControlInsideTemp(wx.Panel):
             self.slider_heat_gain.SetValue(heat_loss)
         else:
             self.slider_Tint.SetValue(int(self.solver.Tint))
-        self.GetParent().Layout()
+
+
+
 
 

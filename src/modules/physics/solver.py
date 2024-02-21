@@ -55,7 +55,15 @@ def format_time_hms(t):
     m=(ts - d * 24 * 3600 - h * 3600) // 60
     s=(ts - d * 24 * 3600 - h * 3600 - m * 60)
 
-    return "%dh%dm%ds" % (h,m,s)
+    return "%02dh%02dm%02ds" % (h,m,s)
+def format_time_hm(t):
+
+    ts=int(t)
+    d=ts//(24*3600)
+    h=(ts - d * 24 * 3600) // 3600
+    m=(ts - d * 24 * 3600 - h * 3600) // 60
+
+    return "%02dh%02dm" % (h,m)
 
 # Layer = namedtuple('Layer', ['e', 'la', 'rho','Cp','dx'])
 
@@ -234,12 +242,12 @@ class SolverHeatEquation1dMultilayer:
         self.ax.margins(0)
 
         wl=self.wall.length
-        hspace=wl/4
+        hspace=wl/5
         self.ax.set_xlim([-hspace,wl+hspace])
         vspace=1
         self.ax.set_ylim([self.Tmin-vspace, self.Tmax+vspace])
 
-        layer_name_height=self.Tmax-1
+        layer_name_height=self.Tmax-2
         x0=0
         self.ax.axvline(x=x0, color="k")
         for i in range(len(self.wall.layers)):
@@ -257,12 +265,13 @@ class SolverHeatEquation1dMultilayer:
         self.ax.text(-hspace,layer_name_height,self.text_inside)
 
 
-        self.ax.text(wl,layer_name_height,self.text_outside)
 
+
+        self.ax.text(wl+hspace/100,layer_name_height,self.text_outside)
+        self.ax.text(wl+hspace/100,layer_name_height-2,format_time_hm(self.time))
 
         self.ax.plot([-hspace,0],[self.Tint,self.Tint],color="tab:green")
         self.ax.plot([wl,wl+hspace],[self.Tout,self.Tout],color="tab:green")
-
 
         vmin=np.inf
         vmax=-np.inf

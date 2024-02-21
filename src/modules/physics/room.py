@@ -4,16 +4,21 @@
 
 class Room:
 
-    def __init__(self, name="room", h=1, shape=(1,1), heating_power=0):
-        self.h=h
+    def __init__(self, name="room", shape=(1,1,2.5), heating_power=0):
         self.shape=shape
         self.heating_power=heating_power
 
         self.name=name
 
-        self.surface= 0*shape[0] * shape[1] * 2 + h * (shape[0]+shape[1]) * 2
+        self.update_prop()
 
-        self.volume= shape[0] * shape[1] * h
+
+
+    def update_prop(self):
+        shape=self.shape
+        self.surface= 0*shape[0] * shape[1] * 2 + shape[2] * (shape[0]+shape[1]) * 2
+
+        self.volume= shape[0] * shape[1] * shape[2]
 
         self.rhoCp = 1.2 * 1000 # rhoCp (volumic heat capacity) of air, maybe I can allow custom values
 
@@ -30,6 +35,11 @@ class Room:
 
         # we want to return the temperature loss over time in W of J/s
         return (phi * self.surface)
+
+
+    def set_shape(self, shape):
+        self.shape=shape
+        self.update_prop()
 
 
 

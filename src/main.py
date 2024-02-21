@@ -4,7 +4,8 @@ import wx
 
 import matplotlib.backends.backend_wxagg
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg
-#from matplotlib.backends.backend_wx import NavigationToolbar2Wx
+# from matplotlib.backends.backend_wxagg import NavigationToolbar2WxAgg
+
 from threading import Thread
 import time
 import copy
@@ -47,13 +48,20 @@ class PanelAnimatedFigure(wx.Panel):
     def LoadFigure(self,figure):
         self.Freeze()
         self.Disable()
+        canvas = FigureCanvasWxAgg(self, -1, figure)
+        canvas.SetMinSize(self.fixed_min_size)
+        canvas.draw_idle()
+
+
+        # self.canvas.Destroy()
+
+        # self.Enable()
+        # self.sizer = wx.BoxSizer(wx.VERTICAL)
+        # self.sizer.Add(canvas, 1, wx.BOTTOM|wx.EXPAND,0)
+        self.sizer.Replace(self.canvas, canvas)
+
         self.canvas.Destroy()
-        self.canvas = FigureCanvasWxAgg(self, -1, figure)
-        self.canvas.SetMinSize(self.fixed_min_size)
-        self.canvas.draw_idle()
-        self.Enable()
-        self.sizer = wx.BoxSizer(wx.VERTICAL)
-        self.sizer.Add(self.canvas, 1, wx.BOTTOM|wx.EXPAND,0)
+        self.canvas=canvas
         self.SetSizer(self.sizer)
         self.Thaw()
 
@@ -320,18 +328,17 @@ class MainPanel(wx.Panel):
 
 
     def on_wall_setup_change(self, event):
-        # ~ layers=event.GetLayers()
-        # ~ self.solver.change_layers(layers)
-        self.redraw()
+        # self.redraw()
+        return
 
     def on_press_statio(self,event):
         self.solver.solve_stationnary()
         self.solver.time=0
-        self.redraw()
+        # self.redraw()
 
     def on_press_reset(self,event):
         self.solver.remesh()
-        self.redraw()
+        # self.redraw()
 
 
 

@@ -168,7 +168,7 @@ DefaultConfig.add_preset_wall("Béton seul", [(0.4, "Béton")])
 
 
 
-DefaultConfig.add_preset_room(Room(h=2.5, shape=(5,5), heating_power=0, name="Pièce par défault"))
+DefaultConfig.add_preset_room(Room(shape=(10,5, 2.5), heating_power=0, name="Pièce par défault"))
 
 
 
