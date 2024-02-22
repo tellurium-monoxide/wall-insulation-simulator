@@ -143,7 +143,7 @@ class PanelSolverInfo(wx.Panel):
         self.sizer_v.Add(self.info_Nx, 0, wx.LEFT, 3)
         self.info_limit=wx.StaticText(self,label="")
         self.sizer_v.Add(self.info_limit, 0, wx.LEFT, 3)
-
+		
 
 
 
@@ -350,7 +350,10 @@ class MainPanel(wx.Panel):
         self.redraw()
 
     def on_timer_redraw(self,event):
+
+        self.solver.needRedraw=True
         self.redraw()
+        self.solver.needRedraw=False
 
         time_new_redraw=time.perf_counter_ns()
 
@@ -523,4 +526,3 @@ if __name__ == '__main__':
 
 
     app.MainLoop()
-

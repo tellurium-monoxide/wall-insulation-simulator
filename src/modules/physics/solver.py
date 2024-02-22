@@ -100,6 +100,7 @@ class SolverHeatEquation1dMultilayer:
         self.this_run_start=time.perf_counter_ns()
 
         self.Tint_is_variable=False
+        self.needRedraw=False
 
         self.this_run_time=0
         self.this_run_updates=0
@@ -512,12 +513,16 @@ class SolverHeatEquation1dMultilayer:
 
             time_new_redraw=time.perf_counter_ns()
             self.time_since_redraw=time_new_redraw-self.time_last_redraw
-            needRedraw=self.time_since_redraw > 50*1000000 # 50 is main_panel.timer_update_redraw.GetInterval()
+#            needRedraw=self.time_since_redraw >= 30*1e6 # 50 is main_panel.timer_update_redraw.GetInterval()
 
-            isTooFast=self.time_since_redraw > 0 and self.updates_since_redraw/self.time_since_redraw*1e9 > self.steps_to_statio/LIMITER_RATIO
-            if  not(needRedraw) and not(isTooFast):
+            steps_per_sec= self.updates_since_redraw/self.time_since_redraw*1e9
+            isTooFast=self.time_since_redraw > 0 and  steps_per_sec > self.steps_to_statio/LIMITER_RATIO
+#            isTooFast=False
+            if  not(self.needRedraw) and not(isTooFast):
                 self.advance_time()
                 self.updates_since_redraw+=1
+            else:
+                time.sleep(0.001)
 
             # elif isTooFast:
                 # print("limiting updates per sec")
