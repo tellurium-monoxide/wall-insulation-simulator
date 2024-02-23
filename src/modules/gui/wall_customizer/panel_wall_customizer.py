@@ -117,21 +117,27 @@ class PanelLayerMgr(wx.Panel):
     def on_press_button_edit(self,event):
         self.toggle_edit()
 
-    def toggle_edit(self, set_custom=True):
+    def toggle_edit(self):
         self.is_frozen=not(self.is_frozen)
         if not(self.is_frozen): # set it to unfrozen state
             self.localizer.link(self.button_edit.SetLabel, "button_edit_confirm", "button_edit")
             self.panel_layer_list.enable_input()
-            self.Layout()
-            if set_custom:
-                self.choice_scenario.SetSelection(0)
-            # ~ self.panel_layers.Thaw()
-        else:# set to frozen state and send confirmed layers above
+            self.button_load.Disable()
+            self.button_save.Disable()
+            self.ctrl_save_name.Disable()
+            self.choice_scenario.Disable()
+            
+
+        else:
             self.localizer.link(self.button_edit.SetLabel, "button_edit", "button_edit")
             self.panel_layer_list.disable_input()
             self.send_layers(self.panel_layer_list.gather_layers())
+            self.button_load.Enable()
+            self.button_save.Enable()
+            self.ctrl_save_name.Enable()
+            self.choice_scenario.Enable()
 
-            self.Layout()
+        self.Layout()
 
     def on_press_save_scenario(self,event):
         preset_name=self.ctrl_save_name.GetValue()
@@ -170,7 +176,7 @@ class PanelLayerMgr(wx.Panel):
     def load_preset(self):
         sel=self.choice_scenario.GetSelection()
         if (self.is_frozen):
-                self.toggle_edit(set_custom=False)
+                self.toggle_edit()
 
         preset_name=self.choice_scenario.GetStrings()[sel]
         preset_wall=self.solver.wall.config.get_preset(preset_name)
@@ -180,7 +186,7 @@ class PanelLayerMgr(wx.Panel):
         self.panel_layer_list.load_layers(preset_wall)
         self.send_layers(preset_wall)
         if not(self.is_frozen):
-                self.toggle_edit(set_custom=False)
+                self.toggle_edit()
 
 
 

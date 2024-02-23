@@ -43,9 +43,11 @@ class PanelLayer(wx.Panel):
         self.display_mat.set_values(self.solver.wall.config.get_material_list()[0])
 
         # second column controls: add/remove layers
-        self.button_rem= wx.Button(self, label="x", size=(30,-1))
+        # self.button_rem= wx.Button(self, label="x", style=wx.BU_EXACTFIT)
+        self.button_rem= wx.BitmapButton(self, bitmap=wx.ArtProvider.GetBitmap(wx.ART_MINUS), style=wx.BU_EXACTFIT)
         self.button_rem.SetToolTip("Remove this layer")
-        self.button_add= wx.Button(self, label="+", size=(30,-1))
+        # self.button_add= wx.Button(self, label="+", style=wx.BU_EXACTFIT)
+        self.button_add= wx.BitmapButton(self, bitmap=wx.ArtProvider.GetBitmap(wx.ART_PLUS), style=wx.BU_EXACTFIT)
         self.button_add.SetToolTip("Add a layer to the right of this one")
 
 
@@ -56,8 +58,9 @@ class PanelLayer(wx.Panel):
         self.sizer_v1.Add(self.display_mat,1,wx.EXPAND | wx.ALL,0)
 
         self.sizer_v2 = wx.BoxSizer(wx.VERTICAL)
-        self.sizer_v2.Add(self.button_rem,1,wx.ALL,2)
         self.sizer_v2.Add(self.button_add,1,wx.ALL,2)
+        self.sizer_v2.Add(self.button_rem,1,wx.ALL,2)
+        
 
         self.sizer_h = wx.BoxSizer(wx.HORIZONTAL)
         self.sizer_h.Add(self.sizer_v1,0,wx.EXPAND,0)
@@ -109,14 +112,16 @@ class PanelLayer(wx.Panel):
 
     def set_layer(self, layer):
         try:
-            mat_id=self.solver.wall.config.get_material_list().index(layer.mat.name)
+            mat_id=self.typechoice.GetStrings().index(layer.mat.name)
+            mat_name=layer.mat.name
         except ValueError:
             print("Trying to set layer with unregistered name")
             mat_id=0
+            mat_name=self.typechoice.GetStrings()[0]
         if mat_id>=0:
             self.disable_mat_input()
         self.typechoice.SetSelection(mat_id)
-        self.set_mat_vals(layer.mat.name)
+        self.set_mat_vals(mat_name)
         self.input_layer_width.SetValue(layer.e)
 
 
@@ -128,8 +133,6 @@ class PanelLayer(wx.Panel):
         except ValueError:
             mat_new_id=0
             mat_name=self.solver.wall.config.get_material_list()[0]
-        # else:
-        # print(self.typechoice.GetStrings())
         self.typechoice.SetItems( self.solver.wall.config.get_material_list() )
         self.typechoice.SetSelection(mat_new_id)
         self.set_mat_vals(mat_name)

@@ -9,7 +9,6 @@ import numpy as np
 import matplotlib
 matplotlib.use('WxAgg')
 
-import matplotlib.backends.backend_wxagg
 from matplotlib.figure import Figure
 
 

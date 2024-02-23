@@ -157,9 +157,7 @@ class PanelMaterialCreator(wx.Frame):
 
     def on_button_save(self, event):
 
-        la=self.input_layer_mat_lambda.GetValue()
-        rho=self.input_layer_mat_rho.GetValue()
-        Cp=self.input_layer_mat_cp.GetValue()
+        la,rho,Cp=self.input.GetValues()
 
         # name=self.ctrl_save_name.GetValue()
         # if len(name)==0: # takes name from choice above as we assume the goal is to overwrite it

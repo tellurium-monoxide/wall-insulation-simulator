@@ -33,7 +33,7 @@ class PanelLayerList(wx.Panel):
         self.solver=parent.solver
         self.localizer=parent.localizer
 
-        self.button_add_begin= wx.Button(self, label="+", size=(30,-1))
+        self.button_add_begin= wx.BitmapButton(self, bitmap=wx.ArtProvider.GetBitmap(wx.ART_PLUS), style=wx.BU_EXACTFIT)
         self.button_add_begin.SetToolTip("add a layer right here on the left")
         self.button_add_begin.Bind(wx.EVT_BUTTON, self.on_press_add_begin)
 
@@ -99,11 +99,28 @@ class PanelLayerList(wx.Panel):
             return True
         return False
 
+    def sanitize_layers(self):
+        # we fuse consecutive layers of same material to reduce mesh size
+        layer_id=0
+        while layer_id<len(self.list_of_panel_layer)-1:
+            layer=self.list_of_panel_layer[layer_id].get_layer()
+            layer_next=self.list_of_panel_layer[layer_id+1].get_layer()
+            if layer.mat.name==layer_next.mat.name:
+                e=layer.e + layer_next.e
+                layer_fused=Layer(e=e, mat=layer.mat)
+                self.list_of_panel_layer[layer_id].set_layer(layer_fused)
+                self.remove_layer(layer_id+1)
+                
+            else:
+                layer_id+=1
+
     def gather_layers(self):
+        self.sanitize_layers()
         layers=[]
         for panel_layer in self.list_of_panel_layer:
             layer = panel_layer.get_layer()
             layers.append(layer)
+            
         return layers
 
     def set_layer_amount(self, n):

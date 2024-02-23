@@ -139,7 +139,7 @@ class InputMaterialProp(wx.Panel):
         self.Cp_value.SetValue(mat.Cp)
         return
 
-    def GetValues(self, mat_name):
+    def GetValues(self):
 
         la=self.la_value.GetValue()
         rho=self.rho_value.GetValue()

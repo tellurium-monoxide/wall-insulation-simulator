@@ -1,12 +1,9 @@
+
+
+
 import wx
-from wx.lib.masked import NumCtrl
-import wx.lib.scrolledpanel as scrolled
-import matplotlib.backends.backend_wxagg
-from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg
-#from matplotlib.backends.backend_wx import NavigationToolbar2Wx
-from threading import Thread
-import time
-import copy
+
+
 
 # local imports
 
@@ -129,12 +126,16 @@ class CtrlPositiveBoundedDecimal(wx.Panel):
         wx.Panel.__init__(self, parent)
         self.unit_scale=unit_scale
         self.def_val=def_val
-        self.fractionWidth=fractionWidth
+        
+        self.fractionWidth=fractionWidth 
 
+        
+        self.min_value=min_value
+        self.max_value=max_value
 
         validator=ValidatorDecimalInputOnly(min_value=min_value, max_value=max_value)
 
-        self.num_ctrl = wx.TextCtrl(self, value=str(def_val), validator=validator, size=(50, -1))
+        self.num_ctrl = wx.TextCtrl(self, value=str(def_val), validator=validator)
         self.num_ctrl.SetToolTip("Min:%g\nMax:%g" % (min_value, max_value))
 
 
@@ -150,6 +151,7 @@ class CtrlPositiveBoundedDecimal(wx.Panel):
         self.Validate()
         return (float(self.num_ctrl.GetValue())/self.unit_scale)
     def SetValue(self, val):
-        self.num_ctrl.SetValue(str(val*self.unit_scale))
+        bounded_val=min(max(val, self.min_value/self.unit_scale), self.max_value/self.unit_scale)
+        self.num_ctrl.SetValue(str(round(bounded_val*self.unit_scale, self.fractionWidth)))
 
 

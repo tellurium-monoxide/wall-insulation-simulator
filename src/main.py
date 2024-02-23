@@ -1,28 +1,26 @@
-import wx
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 
-# import wx.lib.analogclock as wxclock
-
-import matplotlib.backends.backend_wxagg
-from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg
-# from matplotlib.backends.backend_wxagg import NavigationToolbar2WxAgg
-
-from threading import Thread
 import time
 import copy
+from threading import Thread
+
 from functools import partial
+
+import wx
+
+from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg
+# from matplotlib.backends.backend_wxagg import NavigationToolbar2WxAgg
 
 # local imports
 from modules.physics.solver import Layer, Material
 from modules.physics.solver import SolverHeatEquation1dMultilayer as Solver
-# ~ from physics_module.materials import Material, DefaultMaterials
 
 from modules.localizer.mylocalizer import MyLocalizer
 
 # interface imports
-
 from modules.gui.wall_customizer.panel_wall_customizer import PanelLayerMgr, StaticBoxWallCustomizerWrapper
 from modules.gui.temperature_controller.controller_inside_temp import ControlInsideTemp
-
 from modules.gui.events import *
 
 
@@ -53,16 +51,12 @@ class PanelAnimatedFigure(wx.Panel):
         canvas.draw_idle()
 
 
-        # self.canvas.Destroy()
-
-        # self.Enable()
-        # self.sizer = wx.BoxSizer(wx.VERTICAL)
-        # self.sizer.Add(canvas, 1, wx.BOTTOM|wx.EXPAND,0)
         self.sizer.Replace(self.canvas, canvas)
 
         self.canvas.Destroy()
         self.canvas=canvas
-        self.SetSizer(self.sizer)
+
+        self.Enable()
         self.Thaw()
 
 
@@ -143,7 +137,7 @@ class PanelSolverInfo(wx.Panel):
         self.sizer_v.Add(self.info_Nx, 0, wx.LEFT, 3)
         self.info_limit=wx.StaticText(self,label="")
         self.sizer_v.Add(self.info_limit, 0, wx.LEFT, 3)
-		
+        
 
 
 
