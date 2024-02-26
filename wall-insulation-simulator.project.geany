@@ -19,7 +19,7 @@ indent_mode=2
 
 [project]
 name=wall-insulation-simulator
-base_path=/home/catB/tb266682/Documents/projets_perso/wall-insulation-simulator
+base_path=.
 description=
 file_patterns=*.py;
 
@@ -28,18 +28,12 @@ long_line_behaviour=2
 long_line_column=72
 
 [files]
-current_page=4
-FILE_NAME_0=1449;Python;0;EUTF-8;0;1;0;%2Fhome%2FcatB%2Ftb266682%2FDocuments%2Fprojets_perso%2Fwall-insulation-simulator%2Fsrc%2Fmain.py;0;4
-FILE_NAME_1=0;Python;0;EUTF-8;0;1;0;%2Fhome%2FcatB%2Ftb266682%2FDocuments%2Fprojets_perso%2Fwall-insulation-simulator%2Fsrc%2Fmodules%2Fphysics%2Fsolver.py;0;4
-FILE_NAME_2=3384;Python;0;EUTF-8;0;1;1;%2Fhome%2FcatB%2Ftb266682%2FDocuments%2Fprojets_perso%2Fwall-insulation-simulator%2Fsrc%2Fmodules%2Fgui%2Fwall_customizer%2Flayer_choice_list.py;0;4
-FILE_NAME_3=3470;Python;0;EUTF-8;0;1;1;%2Fhome%2FcatB%2Ftb266682%2FDocuments%2Fprojets_perso%2Fwall-insulation-simulator%2Fsrc%2Fmodules%2Fgui%2Fwall_customizer%2Flayer_choice.py;0;4
-FILE_NAME_4=6579;Python;0;EUTF-8;0;1;1;%2Fhome%2FcatB%2Ftb266682%2FDocuments%2Fprojets_perso%2Fwall-insulation-simulator%2Fsrc%2Fmodules%2Fgui%2Fwall_customizer%2Fpanel_wall_customizer.py;0;4
-FILE_NAME_5=5385;Python;0;EUTF-8;0;1;1;%2Fhome%2FcatB%2Ftb266682%2FDocuments%2Fprojets_perso%2Fwall-insulation-simulator%2Fsrc%2Fmodules%2Fgui%2Fwall_customizer%2Fmaterial_creator.py;0;4
-FILE_NAME_6=5423;Python;0;EUTF-8;0;1;1;%2Fhome%2FcatB%2Ftb266682%2FDocuments%2Fprojets_perso%2Fwall-insulation-simulator%2Fsrc%2Fmodules%2Fgui%2Fwall_customizer%2Fcontrols_materials.py;0;4
+current_page=0
+FILE_NAME_0=17551;Python;0;EUTF-8;0;1;1;Y%3A%5CDocuments%5CCode%5Cwall-insulation-simulator%5Csrc%5Cmain.py;0;4
 
 [build-menu]
 EX_00_LB=_Exécuter
-EX_00_CM=python3 "%p/src/main.py"
+EX_00_CM=python "%p/src/main.py"
 EX_00_WD=
 PythonFT_02_LB=_Lint
 PythonFT_02_CM=/home/catB/tb266682/.venv-junest/bin/python3 -m pep8 --max-line-length=80 "%f"
@@ -63,4 +57,4 @@ ignored_file_patterns=*__init__*;
 generate_tag_prefs=0
 show_empty_dirs=true
 external_dirs=
-expanded_paths=/home/catB/tb266682/Documents/projets_perso/wall-insulation-simulator/pyinstaller;/home/catB/tb266682/Documents/projets_perso/wall-insulation-simulator/src/modules/gui/controls_numeric_values;/home/catB/tb266682/Documents/projets_perso/wall-insulation-simulator/src/modules/gui/wall_customizer;/home/catB/tb266682/Documents/projets_perso/wall-insulation-simulator/src/modules/localizer;/home/catB/tb266682/Documents/projets_perso/wall-insulation-simulator/src/modules/physics;
+expanded_paths=Y:\\Documents\\Code\\wall-insulation-simulator\\.\\pyinstaller;Y:\\Documents\\Code\\wall-insulation-simulator\\.\\src\\modules\\gui\\controls_numeric_values;Y:\\Documents\\Code\\wall-insulation-simulator\\.\\src\\modules\\gui\\temperature_controller;Y:\\Documents\\Code\\wall-insulation-simulator\\.\\src\\modules\\gui\\wall_customizer;Y:\\Documents\\Code\\wall-insulation-simulator\\.\\src\\modules\\localizer;Y:\\Documents\\Code\\wall-insulation-simulator\\.\\src\\modules\\physics;
