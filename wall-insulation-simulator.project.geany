@@ -29,11 +29,11 @@ long_line_column=72
 
 [files]
 current_page=0
-FILE_NAME_0=17551;Python;0;EUTF-8;0;1;1;Y%3A%5CDocuments%5CCode%5Cwall-insulation-simulator%5Csrc%5Cmain.py;0;4
+FILE_NAME_0=71;Python;0;EUTF-8;0;1;1;%2Fhome%2FcatB%2Ftb266682%2FDocuments%2FSaved%2Fcode%2Fprojets_perso%2Fwall-insulation-simulator%2Fsrc%2Fmain.py;0;4
 
 [build-menu]
 EX_00_LB=_Exécuter
-EX_00_CM=python "%p/src/main.py"
+EX_00_CM=python3 "%p/src/main.py"
 EX_00_WD=
 PythonFT_02_LB=_Lint
 PythonFT_02_CM=/home/catB/tb266682/.venv-junest/bin/python3 -m pep8 --max-line-length=80 "%f"
@@ -52,7 +52,7 @@ last_dir=/home/catB/tb266682
 [prjorg]
 source_patterns=*.py;
 header_patterns=
-ignored_dirs_patterns=.*;CVS;__pycache__;
+ignored_dirs_patterns=.*;CVS;__pycache__;venv*;
 ignored_file_patterns=*__init__*;
 generate_tag_prefs=0
 show_empty_dirs=true
