@@ -8,7 +8,7 @@ from matplotlib import ticker
 import numpy as np
 
 
-from ..helpers.time_formatting import format_time, format_time_hms, format_time_hm
+from ..helpers.time_formatting import format_time_h_om
 
 
 class TemperatureCycle:
@@ -67,11 +67,9 @@ class TemperatureCycle:
         print("could not find a temperature for the given time in the cycle")
         return False
         
-    def plot_cycle(self):
-        figure = Figure()
-        # ax=figure.add_axes([0,0,1,1])
-        ax=figure.subplots()
-        
+    def plot_cycle(self,ax,  time=None):
+
+        ax.clear()
         ax.axis("on")
         
         ax.set_title(self.name)
@@ -80,12 +78,17 @@ class TemperatureCycle:
         
         ax.plot(times, self.temperatures +  [self.temperatures[0]])
         
-        formatter = lambda x, pos: format_time_hm(x)
+        formatter = lambda x, pos: format_time_h_om(x)
+        
+        if time!=None:
+            time_r=time%self.length
+            T=self.get_temp(time)
+            ax.scatter([time_r], [T])
+            ax.axvline(x=time_r)
         
         ax.xaxis.set_major_formatter(formatter)
         ax.xaxis.set_major_locator(ticker.FixedLocator(times))
         
-        return figure
         
         
         

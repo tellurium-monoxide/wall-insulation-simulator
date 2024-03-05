@@ -41,3 +41,14 @@ def format_time_hm(t):
     m=(ts - d * 24 * 3600 - h * 3600) // 60
 
     return "%02dh%02dm" % (h,m)
+    
+def format_time_h_om(t):
+
+    ts=int(t)
+    d=ts//(24*3600)
+    h=(ts - d * 24 * 3600) // 3600
+    m=(ts - d * 24 * 3600 - h * 3600) // 60
+    if m>0:
+        return "%02dh%02dm" % (h,m)
+    else:
+        return "%02dh" % (h)

@@ -9,8 +9,7 @@ from functools import partial
 
 import wx
 
-from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg
-# from matplotlib.backends.backend_wxagg import NavigationToolbar2WxAgg
+
 
 # local imports
 from modules.physics.solver import Layer, Material
@@ -23,42 +22,12 @@ from modules.gui.wall_customizer.panel_wall_customizer import PanelLayerMgr, Sta
 from modules.gui.temperature_controller.controller_inside_temp import ControlInsideTemp
 from modules.gui.temperature_controller.controller_outside_temp import ControlOutsideTemp
 from modules.gui.events import *
+from modules.gui.animated_figure import PanelAnimatedFigure
 
 
 
 
-class PanelAnimatedFigure(wx.Panel):
-    def __init__(self, parent, figure, min_size=(640,400)):
-        wx.Panel.__init__(self, parent)
-        self.parent=parent
-        self.fixed_min_size=min_size
-        self.canvas = FigureCanvasWxAgg(self, -1, figure)
-        self.canvas.SetMinSize(self.fixed_min_size)
-        self.canvas.draw_idle()
 
-        self.sizer = wx.BoxSizer(wx.VERTICAL)
-
-        self.sizer.Add(self.canvas, 1, wx.BOTTOM|wx.EXPAND, 0)
-        self.SetSizer(self.sizer)
-
-        self.Fit()
-
-
-    def LoadFigure(self,figure):
-        self.Freeze()
-        self.Disable()
-        canvas = FigureCanvasWxAgg(self, -1, figure)
-        canvas.SetMinSize(self.fixed_min_size)
-        canvas.draw_idle()
-
-
-        self.sizer.Replace(self.canvas, canvas)
-
-        self.canvas.Destroy()
-        self.canvas=canvas
-
-        self.Enable()
-        self.Thaw()
 
 
 class FigureWithTemperatureSliders(wx.Panel):
@@ -294,7 +263,7 @@ class MainPanel(wx.Panel):
 
 #        self.thread_update_loop = Thread(target=self.update_loop_thread)
         self.timer_update_redraw= wx.Timer(self)
-        self.timer_update_redraw.Start(30)
+        self.timer_update_redraw.Start(40)
 
 
         self.Bind(wx.EVT_TIMER, self.on_timer_redraw, self.timer_update_redraw)
@@ -373,7 +342,8 @@ class MainPanel(wx.Panel):
     def redraw(self):
         self.panel_info.update_info(self.solver)
         self.solver.draw()
-        self.panel_fig_sliders.panelfig.LoadFigure(self.solver.figure)
+        # self.panel_fig_sliders.panelfig.LoadFigure(self.solver.figure)
+        self.panel_fig_sliders.panelfig.Refresh()
         self.panel_fig_sliders.ctrl_inside_temp.update()
         self.panel_fig_sliders.ctrl_outside_temp.update()
 

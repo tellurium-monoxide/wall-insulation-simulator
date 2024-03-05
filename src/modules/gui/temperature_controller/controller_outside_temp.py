@@ -2,10 +2,11 @@
 
 import math
 import wx
-
+from matplotlib.figure import Figure
 
 from ..controls_numeric_values.bounded_value import CtrlPositiveBoundedDecimal
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg
+from ..animated_figure import PanelAnimatedFigure
 
 class ControlOutsideTemp(wx.Panel):
 
@@ -53,6 +54,9 @@ class ControlOutsideTemp(wx.Panel):
 
         self.check.Bind(wx.EVT_CHECKBOX, self.on_check)
         self.button_show_cycle.Bind(wx.EVT_BUTTON, self.on_show_cycle)
+        
+        self.viz=CycleVisualizer(self)
+        
 
 
 
@@ -64,7 +68,8 @@ class ControlOutsideTemp(wx.Panel):
         
         
     def on_show_cycle(self, event):
-        CycleVisualizer(self)
+        self.viz.Show()
+        self.button_show_cycle.Disable()
 
 
 
@@ -75,6 +80,9 @@ class ControlOutsideTemp(wx.Panel):
 
         if (self.check.IsChecked()):
             self.slider_Tout.SetValue(int(self.solver.Tout))
+            
+        if self.viz.IsShown():
+            self.viz.update()
             
 
 
@@ -92,17 +100,36 @@ class CycleVisualizer(wx.Frame):
         
         self.SetTitle("Cycle visualization")
         
-        figure=self.solver.wall.temp_cycle.plot_cycle()
-        self.canvas = FigureCanvasWxAgg(self, -1, figure)
-        # self.canvas.SetMinSize(self.fixed_min_size)
-        self.canvas.draw_idle()
+        
+        self.figure = Figure()
+        self.ax=self.figure.subplots()
+        self.solver.wall.temp_cycle.plot_cycle(self.ax,time=self.solver.time)
+        
+        self.panel_fig = PanelAnimatedFigure(self, self.figure, minsize=(500,300))
+
         
         sizer=wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(self.canvas, 1, wx.EXPAND, 0)
+        sizer.Add(self.panel_fig, 1, wx.EXPAND, 0)
         
         self.SetSizer(sizer)
         sizer.SetSizeHints(self)
-        self.Fit()
-        self.Show()
+        self.Layout()
+        
+        self.Bind(wx.EVT_CLOSE , self.on_close)
+        
+        
+        
+        
+        # self.Show()
 
 
+    def on_close(self,event):
+        self.parent.button_show_cycle.Enable()
+        self.Hide()
+
+
+    def update(self):
+        self.solver.wall.temp_cycle.plot_cycle(self.ax,time=self.solver.time)
+        self.panel_fig.Refresh()
+        # self.Layout()
+        
