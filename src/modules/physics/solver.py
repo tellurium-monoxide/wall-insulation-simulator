@@ -4,7 +4,7 @@
 import time
 
 import numpy as np
-
+import scipy.sparse
 
 import matplotlib
 matplotlib.use('WxAgg')
@@ -24,7 +24,7 @@ from .layered_wall import Wall
 NPOINT_PREFERRED_PER_LAYER=10
 NPOINT_MINIMAL_PER_LAYER=4
 
-LIMITER_RATIO = 2
+LIMITER_RATIO = 1e-5
 
 
 from ..helpers.time_formatting import format_time, format_time_hms, format_time_hm
@@ -67,9 +67,14 @@ class SolverHeatEquation1dMultilayer:
         self.Tint_is_variable=False
         self.Tout_use_cycle=False
         self.needRedraw=False
+        
+        self.use_sparse=False
+        
 
         self.this_run_time=0
         self.this_run_updates=0
+        self.steps_per_sec_redraw=0
+        self.this_run_ups=0
 
         self.method="implicit"
 
@@ -390,6 +395,7 @@ class SolverHeatEquation1dMultilayer:
         nl=len(self.wall.layers)
         Ntot = sum([layer.Npoints for layer in self.wall.layers]) - nl+1 + 1
         M=np.zeros((Ntot,Ntot))
+        
         Tglob=np.zeros(Ntot)
 
         l0=self.wall.layers[0]
@@ -398,24 +404,32 @@ class SolverHeatEquation1dMultilayer:
         M[0,1]=  alpha *coef
         M[0,2]= - alpha *coef
 
+
         Tglob[0]=self.Tint + self.Tint_is_variable * self.dt * self.wall.room.heating_power /self.wall.room.heat_capacity
         Tglob[0]+= (1-alpha) * coef * (l0.Tmesh[1] - l0.Tmesh[0])
 
         M[1,0]=   -1
+
 
         lid=1
         for i in range(nl):
             layer=self.wall.layers[i]
             T=layer.Tmesh
             n=len(T)
-            Kl=np.zeros((n,n))
+            
             Tr=np.zeros(n)
 
-
-            for p in range(1,n-1):
-                Kl[p,p]=-2
-                Kl[p,p-1]=1
-                Kl[p,p+1]=1
+            # Kl=np.zeros((n,n))
+            # for p in range(1,n-1):
+                # Kl[p,p]=-2
+                # Kl[p,p-1]=1
+                # Kl[p,p+1]=1
+            Kl=np.diag([-2]*(n))+np.diag([1]*(n-1),k=1)+np.diag([1]*(n-1),k=-1)
+            Kl[0,0]=0
+            Kl[0,1]=0
+            Kl[-1,-1]=0
+            Kl[-1,-2]=0
+            # print(Kl)
 
             Ml= np.eye(n) - alpha * self.dt * layer.mat.D * Kl / layer.dx**2
 
@@ -425,6 +439,7 @@ class SolverHeatEquation1dMultilayer:
             if i==0:
                 Tr[0]=0
                 Ml[0,0]=1
+
             else:
                 # layerleft=self.wall.layers[i-1]
                 Tr[0]=0
@@ -443,6 +458,7 @@ class SolverHeatEquation1dMultilayer:
                 # Ml[-1,-1]=1/2  * layer.mat.la / layer.dx
                 Ml[-1,-2]=1  * layer.mat.la / layer.dx
                 Ml[-1,-1]=-1  * layer.mat.la / layer.dx
+
             M[lid:lid+n,lid:lid+n] = M[lid:lid+n,lid:lid+n]+Ml
             Tglob[lid:lid+n] = Tglob[lid:lid+n]+Tr
             # Tup = np.linalg.solve(M,T)
@@ -459,12 +475,134 @@ class SolverHeatEquation1dMultilayer:
             n=layer.Npoints
             self.wall.layers[i].Tmesh=Tup[lid:lid+n]
             lid+=n-1
+            
+    def advance_time_implicit_sparse(self):
+
+        alpha=0.5
+
+        self.time+=self.dt
+        updated_temp=[]
+        nl=len(self.wall.layers)
+        Ntot = sum([layer.Npoints for layer in self.wall.layers]) - nl+1 + 1
+        
+        
+        row=[]
+        col=[]
+        data=[]
+        Tglob=np.zeros(Ntot)
+
+        l0=self.wall.layers[0]
+        coef=self.Tint_is_variable * self.dt *  l0.mat.la/ l0.dx * self.wall.room.surface /self.wall.room.heat_capacity
+        row.append(0)
+        col.append(0)
+        data.append(1)
+        row.append(0)
+        col.append(1)
+        data.append(alpha *coef)
+        row.append(0)
+        col.append(2)
+        data.append(- alpha *coef)
+
+        Tglob[0]=self.Tint + self.Tint_is_variable * self.dt * self.wall.room.heating_power /self.wall.room.heat_capacity
+        Tglob[0]+= (1-alpha) * coef * (l0.Tmesh[1] - l0.Tmesh[0])
+
+
+        row.append(1)
+        col.append(0)
+        data.append(-1)
+
+        lid=1
+        for i in range(nl):
+            layer=self.wall.layers[i]
+            T=layer.Tmesh
+            n=len(T)
+            # Kl=np.zeros((n,n))
+            Tr=np.zeros(n)
+
+
+            for p in range(1,n-1):
+                # Kl[p,p]=-2
+                # Kl[p,p-1]=1
+                # Kl[p,p+1]=1
+                row.append(lid+p)
+                col.append(lid+p)
+                data.append(1 - alpha * self.dt * layer.mat.D * -2 / layer.dx**2)
+                row.append(lid+p)
+                col.append(lid+p-1)
+                data.append(0 - alpha * self.dt * layer.mat.D * 1 / layer.dx**2)
+                row.append(lid+p)
+                col.append(lid+p+1)
+                data.append(0 - alpha * self.dt * layer.mat.D * 1 / layer.dx**2)
+                
+            Kl=np.diag([-2]*(n))+np.diag([1]*(n-1),k=1)+np.diag([1]*(n-1),k=-1)
+            Kl[0,0]=0
+            Kl[0,1]=0
+            Kl[-1,-1]=0
+            Kl[-1,-2]=0
+   
+            Trhs_loc=(np.eye(n) + (1-alpha) * self.dt * layer.mat.D * Kl / layer.dx**2).dot(T)
+            Tr[1:-1]=Trhs_loc[1:-1]
+            
+            # Tr[1:-1]=(np.eye(n-1) + (1-alpha) * self.dt * layer.mat.D * Kl / layer.dx**2).dot(T)
+            
+            # coef=(1-alpha) * self.dt * layer.mat.D / layer.dx**2
+            # Tr[1:-1]= T[1:-1] * (1- 2*coef)  +  coef * ( T[0:-2] + T[2:])
+
+            
+            if i==0:
+                Tr[0]=0
+                row.append(lid)
+                col.append(lid)
+                data.append(1)
+            else:
+                Tr[0]=0
+                row.append(lid)
+                col.append(lid)
+                data.append(-1 * layer.mat.la / layer.dx)
+                row.append(lid)
+                col.append(lid+1)
+                data.append(layer.mat.la / layer.dx)
+            if i==nl-1:
+                Tr[-1]=self.Tout
+                row.append(lid+n-1)
+                col.append(lid+n-1)
+                data.append(1)
+            else:
+                Tr[-1]=0
+                row.append(lid+n-1)
+                col.append(lid+n-2)
+                data.append(layer.mat.la / layer.dx)
+                row.append(lid+n-1)
+                col.append(lid+n-1)
+                data.append(-layer.mat.la / layer.dx)
+
+            Tglob[lid:lid+n] = Tglob[lid:lid+n]+Tr
+            lid+=n-1
+
+        Mcsr=scipy.sparse.csr_matrix((data, (row, col)), shape=(Ntot, Ntot))
+        Mcsr.sort_indices()
+        Mcsr.sum_duplicates()
+        Tup= scipy.sparse.linalg.spsolve(Mcsr, Tglob, use_umfpack=True)
+        # Tup, info= scipy.sparse.linalg.bicg(Mcsr, Tglob)
+
+
+        self.Tint=Tup[0]
+        lid=1
+        for i in range(nl):
+            layer=self.wall.layers[i]
+            n=layer.Npoints
+            self.wall.layers[i].Tmesh=Tup[lid:lid+n]
+            lid+=n-1
 
 
     def advance_time(self):
 
         if self.method=="implicit":
-            self.advance_time_implicit()
+            if self.use_sparse:
+                self.advance_time_implicit_sparse()
+            else:
+                self.advance_time_implicit()
+            
         elif self.method=="explicit":
             self.advance_time_explicit()
             
@@ -474,27 +612,38 @@ class SolverHeatEquation1dMultilayer:
 
 
     def update_loop(self):
-        time_new_redraw=time.perf_counter_ns()
-        self.time_since_redraw=time_new_redraw-self.time_last_redraw
+
+        
+        self.this_run_time=0
+        self.this_run_updates=0
+        self.this_run_start=time.perf_counter_ns()
+        self.time_since_redraw=0
+            
         while self.run_sim:
-            time.sleep(0.00001)
+            # time.sleep(0.00001)
 
 
-            time_new_redraw=time.perf_counter_ns()
-            self.time_since_redraw=time_new_redraw-self.time_last_redraw
-#            needRedraw=self.time_since_redraw >= 30*1e6 # 50 is main_panel.timer_update_redraw.GetInterval()
+            time_new=time.perf_counter_ns()
+            self.time_since_redraw=time_new-self.time_last_redraw
+            self.this_run_time=time_new-self.this_run_start
 
-            steps_per_sec= self.updates_since_redraw/self.time_since_redraw*1e9
-            isTooFast=self.time_since_redraw > 0 and  steps_per_sec > self.steps_to_statio/LIMITER_RATIO
+            self.steps_per_sec_redraw= self.updates_since_redraw/self.time_since_redraw*1e9
+            isTooFast=self.time_since_redraw > 0 and  self.steps_per_sec_redraw > self.steps_to_statio/LIMITER_RATIO
 #            isTooFast=False
             if  not(self.needRedraw) and not(isTooFast):
                 self.advance_time()
                 self.updates_since_redraw+=1
+                self.this_run_updates+=1
+                self.this_run_ups=1e9*self.this_run_updates/self.this_run_time
             else:
                 time.sleep(0.001)
+                # self.draw()
 
             # elif isTooFast:
                 # print("limiting updates per sec")
+        
+        self.this_run_time=0
+        self.this_run_updates=0
 
 
 

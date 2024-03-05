@@ -1,6 +1,20 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+
+import os
+N_THREADS=str(os.cpu_count())
+N_THREADS_FREE=str(os.cpu_count()-1) # 1 thread is used for wx gui
+N_THREADS_PHYSICAL=str(os.cpu_count()//2) # 1 thread is used for wx gui
+N_THREADS_SERIAL= '1' # used to disable parallel
+os.environ["OMP_NUM_THREADS"] = N_THREADS_SERIAL # export OMP_NUM_THREADS=4
+os.environ["OPENBLAS_NUM_THREADS"] = N_THREADS_SERIAL # export OPENBLAS_NUM_THREADS=4 
+os.environ["MKL_NUM_THREADS"] = N_THREADS_SERIAL # export MKL_NUM_THREADS=6
+os.environ["VECLIB_MAXIMUM_THREADS"] = N_THREADS_SERIAL # export VECLIB_MAXIMUM_THREADS=4
+os.environ["NUMEXPR_NUM_THREADS"] = N_THREADS_SERIAL # export NUMEXPR_NUM_THREADS=6
+
+import psutil
+
 import time
 import copy
 from threading import Thread
@@ -110,6 +124,8 @@ class PanelSolverInfo(wx.Panel):
         self.sizer_v.Add(self.info_Nx, 0, wx.LEFT, 3)
         self.info_limit=wx.StaticText(self,label="")
         self.sizer_v.Add(self.info_limit, 0, wx.LEFT, 3)
+        self.info_ups=wx.StaticText(self,label="")
+        self.sizer_v.Add(self.info_ups, 0, wx.LEFT, 3)
         
 
 
@@ -133,6 +149,7 @@ class PanelSolverInfo(wx.Panel):
         self.info_Nx.SetLabel(text_nx)
         limiter=(solver.steps_to_statio/solver.limiter_ratio)
         self.info_limit.SetLabel("limiter = %g" % limiter)
+        self.info_ups.SetLabel("ups = %g" % self.solver.this_run_ups)
         self.Fit()
         self.Thaw()
 
@@ -169,9 +186,20 @@ class PanelSimulationControls(wx.Panel):
         self.localizer.link(self.button_reset.SetLabel, "button_reset", "button_reset", text="")
         # self.localizer.link(self.button_statio.SetToolTip, "button_reset_tooltip", "button_reset_tooltip")
         sizer_h.Add(self.button_reset, 0, wx.ALL, space)
+        
+        self.check_use_sparse = wx.CheckBox(self, label="sparse?")
+        sizer_h.Add(self.check_use_sparse, 0, wx.ALL, space)
 
         self.SetSizer(sizer_h)
         self.Fit()
+        
+        # Bindings
+
+        self.check_use_sparse.Bind(wx.EVT_CHECKBOX, self.on_check_use_sparse)
+        
+    def on_check_use_sparse(self, event):
+        
+        self.solver.use_sparse=event.IsChecked()
 
 class MainPanel(wx.Panel):
     def __init__(self,parent):
@@ -262,13 +290,7 @@ class MainPanel(wx.Panel):
 
 
 #        self.thread_update_loop = Thread(target=self.update_loop_thread)
-        self.timer_update_redraw= wx.Timer(self)
-        self.timer_update_redraw.Start(40)
 
-
-        self.Bind(wx.EVT_TIMER, self.on_timer_redraw, self.timer_update_redraw)
-
-        self.Bind(EVT_WALL_SETUP_CHANGED, self.on_wall_setup_change)
 
 
 
@@ -279,9 +301,10 @@ class MainPanel(wx.Panel):
     def on_press_run(self, event):
         self.solver.run_sim=not(self.solver.run_sim)
         if self.solver.run_sim:
-            self.solver.this_run_start=time.perf_counter_ns()
+            
             self.thread_update_loop = Thread(target=self.solver.update_loop)
             self.thread_update_loop.start()
+            
 
             self.localizer.link(self.panel_menu.button_run.SetLabel, "run_button_pause", "run_button")
             self.panel_menu.button_adv.Disable()
@@ -290,13 +313,8 @@ class MainPanel(wx.Panel):
             self.thread_update_loop.join()
             self.localizer.link(self.panel_menu.button_run.SetLabel, "run_button", "run_button")
             self.panel_menu.button_adv.Enable()
-            self.solver.this_run_time=0
-            self.solver.this_run_updates=0
 
 
-    def on_wall_setup_change(self, event):
-        # self.redraw()
-        return
 
     def on_press_statio(self,event):
         self.solver.solve_stationnary()
@@ -315,25 +333,28 @@ class MainPanel(wx.Panel):
     def on_press_advance(self,event):
         self.solver.advance_time()
         self.redraw()
-
-    def on_timer_redraw(self,event):
-
+        
+    
+    def update(self):
         self.solver.needRedraw=True
         self.redraw()
+        self.solver.time_last_redraw=time.perf_counter_ns()
+        self.solver.updates_since_redraw=0
         self.solver.needRedraw=False
+        
 
-        time_new_redraw=time.perf_counter_ns()
 
-        self.solver.time_since_redraw=time_new_redraw-self.solver.time_last_redraw
-        self.solver.this_run_time=time_new_redraw-self.solver.this_run_start
-        self.solver.this_run_updates+=self.solver.updates_since_redraw
+
+        
+
+        
+        
         # ~ print("updates since last redraw ",self.updates_since_redraw)
         # ~ print("time since last redraw ",self.time_since_redraw/1e6, 'ms')
         # ~ print("updates per seconds :",1e9*self.this_run_updates/self.this_run_time)
         # ~ print("progression to statio :",self.solver.time_to_statio/(self.solver.time+self.solver.dt))
 
-        self.solver.time_last_redraw=time.perf_counter_ns()
-        self.solver.updates_since_redraw=0
+       
 
 
 
@@ -346,6 +367,8 @@ class MainPanel(wx.Panel):
         self.panel_fig_sliders.panelfig.Refresh()
         self.panel_fig_sliders.ctrl_inside_temp.update()
         self.panel_fig_sliders.ctrl_outside_temp.update()
+        
+        # self.parent.update()
 
 
 
@@ -398,7 +421,10 @@ class MainFrame(wx.Frame):
         self.localizer.link(partial(menubar.SetMenuLabel,1), "menu_lang", "menu_lang")
         self.localizer.link(partial(menubar.SetMenuLabel,2), "menu_help", "menu_help")
         self.SetMenuBar(menubar)
-
+        
+        
+        self.status_bar=self.CreateStatusBar(number=2)
+        
 
 
         self.main_panel=MainPanel(self)
@@ -410,14 +436,45 @@ class MainFrame(wx.Frame):
 
         self.SetSizer(self.sizer_v)
         self.sizer_v.SetSizeHints(self)
+        
+        
+        
+        self.timer_update_redraw= wx.Timer(self)
+        self.timer_update_redraw.Start(40)
+        
+        self.timer_update_status= wx.Timer(self)
+        self.timer_update_status.Start(1000)
+
+
+        self.Bind(wx.EVT_TIMER, self.on_timer_redraw, self.timer_update_redraw)
+        # self.Bind(wx.EVT_TIMER, self.update_status, self.timer_update_status)
 # =============================================================================
 # show the frame
 # =============================================================================
         self.Bind(wx.EVT_CLOSE , self.on_close)
         self.localizer.set_lang("fr")
         self.Show()
-
-
+        
+        
+    def on_timer_redraw(self,event):
+        self.update()
+        
+    def update(self):
+        self.main_panel.update()
+        # self.set_status_cpu()
+    def update_status(self, event):
+        # self.main_panel.update()
+        print("status")
+        self.set_status_cpu()
+        print("done")
+        
+        
+    def set_status_cpu(self):
+        # load1, load5, load15 = psutil.getloadavg()
+        # cpu_usage = (load15/os.cpu_count()) * 100
+        cpu_usage = psutil.cpu_percent(5)
+ 
+        self.status_bar.SetStatusText("CPU usage: %g" % cpu_usage, i=1)
 
     def on_close(self,event):
         self.main_panel.timer_update_redraw.Stop()
