@@ -7,6 +7,7 @@ import pickle
 from .materials import Material
 from .layers import Layer
 from .room import Room
+from .temperature_cycle import TemperatureCycle
 
 
 
@@ -18,6 +19,7 @@ class WallConfigData:
         self.materials={}
         self.presets={}
         self.rooms={}
+        self.temp_cycles={}
 
 
     def add_material(self,mat):
@@ -118,6 +120,27 @@ class WallConfigData:
     def get_default_room(self):
         return self.rooms[self.get_room_names_list()[0]]
 
+    def add_temp_cycle(self, cycle):
+        self.temp_cycles[cycle.name]=cycle
+
+    def remove_temp_cycle(self, cycle_name):
+        try:
+            self.temp_cycles.pop(cycle_name)
+        except ValueError:
+            return False
+        else:
+            return True
+            
+    def get_temp_cycle_names_list(self):
+        return list(self.temp_cycles.keys())
+        
+    def get_temp_cycle(self, cycle_name):
+        return self.temp_cycles[cycle_name]
+    def get_default_temp_cycle(self):
+        return self.temp_cycles[self.get_temp_cycle_names_list()[0]]
+        
+        
+        
     def write_to_file(self, pathname, file):
         print("Writing config to %s" % pathname)
         # for name, mat in self.materials.items():
@@ -142,6 +165,10 @@ class WallConfigData:
         self.materials=config.materials
         self.presets=config.presets
 
+
+
+        
+        
 DefaultConfig=WallConfigData()
 
 
@@ -169,6 +196,10 @@ DefaultConfig.add_preset_wall("Béton seul", [(0.4, "Béton")])
 
 
 DefaultConfig.add_preset_room(Room(shape=(10,5, 2.5), heating_power=0, name="Pièce par défault"))
+
+
+
+DefaultConfig.add_temp_cycle(TemperatureCycle([0, 6*3600, 12*3600, 16*3600, 20*3600], [4, 6, 15, 18, 15], name="Cycle par défaut"))
 
 
 

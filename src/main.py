@@ -21,6 +21,7 @@ from modules.localizer.mylocalizer import MyLocalizer
 # interface imports
 from modules.gui.wall_customizer.panel_wall_customizer import PanelLayerMgr, StaticBoxWallCustomizerWrapper
 from modules.gui.temperature_controller.controller_inside_temp import ControlInsideTemp
+from modules.gui.temperature_controller.controller_outside_temp import ControlOutsideTemp
 from modules.gui.events import *
 
 
@@ -75,9 +76,10 @@ class FigureWithTemperatureSliders(wx.Panel):
         self.slider_Tout=wx.Slider(self,value=self.solver.Tout,minValue=self.solver.Tmin, maxValue=self.solver.Tmax, style=wx.SL_VALUE_LABEL | wx.SL_VERTICAL | wx.SL_LEFT | wx.SL_INVERSE| wx.SL_AUTOTICKS, name="Tout")
 
         self.ctrl_inside_temp = ControlInsideTemp(self, self.slider_Tint)
+        self.ctrl_outside_temp = ControlOutsideTemp(self, self.slider_Tout)
 
         # create a FlexGridSizer to position the figure, sliders...
-        sizer_grid = wx.FlexGridSizer(2,4,10,10)
+        sizer_grid = wx.FlexGridSizer(2,5,10,10)
         sizer_grid.AddGrowableRow(1, proportion=1)
         sizer_grid.AddGrowableCol(2, proportion=1)
         # sizer_h_fig_sliders.AddGrowableCol(3, proportion=1)
@@ -87,10 +89,12 @@ class FigureWithTemperatureSliders(wx.Panel):
         sizer_grid.Add(wx.StaticText(self,label="Tint (°C)"),1, wx.ALIGN_CENTER_HORIZONTAL)
         sizer_grid.Add(wx.StaticText(self,label="Temperature graph") ,1, wx.ALIGN_CENTER_HORIZONTAL)
         sizer_grid.Add(wx.StaticText(self,label="Text (°C)"),1, wx.ALIGN_CENTER_HORIZONTAL)
+        sizer_grid.Add(wx.StaticText(self,label="Outside temp control"),1, wx.ALIGN_CENTER_HORIZONTAL)
         sizer_grid.Add(self.ctrl_inside_temp, 0,wx.EXPAND)
         sizer_grid.Add(self.slider_Tint, 0,wx.EXPAND)
         sizer_grid.Add(self.panelfig, 1,wx.EXPAND)
         sizer_grid.Add(self.slider_Tout, 0, wx.EXPAND)
+        sizer_grid.Add(self.ctrl_outside_temp, 0, wx.EXPAND)
 
         self.SetSizer(sizer_grid)
 
@@ -371,6 +375,7 @@ class MainPanel(wx.Panel):
         self.solver.draw()
         self.panel_fig_sliders.panelfig.LoadFigure(self.solver.figure)
         self.panel_fig_sliders.ctrl_inside_temp.update()
+        self.panel_fig_sliders.ctrl_outside_temp.update()
 
 
 

@@ -27,6 +27,7 @@ class Wall:
         self.layers=deepcopy(self.config.get_default_preset())
 
         self.room=deepcopy(self.config.get_default_room())
+        self.temp_cycle=deepcopy(self.config.get_default_temp_cycle())
 
         self.compute_length()
 
@@ -51,6 +52,9 @@ class Wall:
 
     def change_room(self, room):
         self.room=deepcopy(room)
+        
+    def change_temp_cycle(self, temp_cycle):
+        self.temp_cycle=deepcopy(temp_cycle)
 
 
     def compute_length(self):

@@ -28,8 +28,13 @@ long_line_behaviour=2
 long_line_column=72
 
 [files]
-current_page=0
-FILE_NAME_0=71;Python;0;EUTF-8;0;1;1;%2Fhome%2FcatB%2Ftb266682%2FDocuments%2FSaved%2Fcode%2Fprojets_perso%2Fwall-insulation-simulator%2Fsrc%2Fmain.py;0;4
+current_page=3
+FILE_NAME_0=1066;Python;0;EUTF-8;0;1;1;Y%3A%5CDocuments%5CCode%5Cwall-insulation-simulator%5Csrc%5Cmain.py;0;4
+FILE_NAME_1=1686;Python;0;EUTF-8;0;1;1;Y%3A%5CDocuments%5CCode%5Cwall-insulation-simulator%5Csrc%5Cmodules%5Cgui%5Ctemperature_controller%5Ccontroller_outside_temp.py;0;4
+FILE_NAME_2=1441;Python;0;EUTF-8;0;1;1;Y%3A%5CDocuments%5CCode%5Cwall-insulation-simulator%5Csrc%5Cmodules%5Cphysics%5Csolver.py;0;4
+FILE_NAME_3=1266;Python;0;EUTF-8;0;1;1;Y%3A%5CDocuments%5CCode%5Cwall-insulation-simulator%5C.%5Csrc%5Cmodules%5Cphysics%5Ctemperature_cycle.py;0;4
+FILE_NAME_4=4617;Python;0;EUTF-8;0;1;1;Y%3A%5CDocuments%5CCode%5Cwall-insulation-simulator%5Csrc%5Cmodules%5Cphysics%5Cpresets.py;0;4
+FILE_NAME_5=500;Python;0;EUTF-8;0;1;1;Y%3A%5CDocuments%5CCode%5Cwall-insulation-simulator%5Csrc%5Cmodules%5Chelpers%5Ctime_formatting.py;0;4
 
 [build-menu]
 EX_00_LB=_Exécuter
@@ -52,9 +57,9 @@ last_dir=/home/catB/tb266682
 [prjorg]
 source_patterns=*.py;
 header_patterns=
-ignored_dirs_patterns=.*;CVS;__pycache__;venv*;
+ignored_dirs_patterns=.*;CVS;__pycache__;
 ignored_file_patterns=*__init__*;
 generate_tag_prefs=0
 show_empty_dirs=true
 external_dirs=
-expanded_paths=Y:\\Documents\\Code\\wall-insulation-simulator\\.\\pyinstaller;Y:\\Documents\\Code\\wall-insulation-simulator\\.\\src\\modules\\gui\\controls_numeric_values;Y:\\Documents\\Code\\wall-insulation-simulator\\.\\src\\modules\\gui\\temperature_controller;Y:\\Documents\\Code\\wall-insulation-simulator\\.\\src\\modules\\gui\\wall_customizer;Y:\\Documents\\Code\\wall-insulation-simulator\\.\\src\\modules\\localizer;Y:\\Documents\\Code\\wall-insulation-simulator\\.\\src\\modules\\physics;
+expanded_paths=Y:\\Documents\\Code\\wall-insulation-simulator\\.\\pyinstaller;Y:\\Documents\\Code\\wall-insulation-simulator\\.\\src\\modules\\gui\\temperature_controller;Y:\\Documents\\Code\\wall-insulation-simulator\\.\\src\\modules\\gui\\wall_customizer;Y:\\Documents\\Code\\wall-insulation-simulator\\.\\src\\modules\\helpers;Y:\\Documents\\Code\\wall-insulation-simulator\\.\\src\\modules\\localizer;Y:\\Documents\\Code\\wall-insulation-simulator\\.\\src\\modules\\physics;
