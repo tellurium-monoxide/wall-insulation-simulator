@@ -42,7 +42,7 @@ class PanelAnimatedFigure(wx.Panel):
         # self.Disable()
         
         self.canvas.draw_idle()
-        self.canvas.flush_events()
+        # self.canvas.flush_events()
         # self.Enable()
         # self.Thaw()
 

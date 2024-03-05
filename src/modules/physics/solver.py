@@ -24,7 +24,7 @@ from .layered_wall import Wall
 NPOINT_PREFERRED_PER_LAYER=10
 NPOINT_MINIMAL_PER_LAYER=4
 
-LIMITER_RATIO = 1e-5
+LIMITER_RATIO = 2e-9
 
 
 from ..helpers.time_formatting import format_time, format_time_hms, format_time_hm
@@ -620,7 +620,7 @@ class SolverHeatEquation1dMultilayer:
         self.time_since_redraw=0
             
         while self.run_sim:
-            # time.sleep(0.00001)
+            time.sleep(0.0001)
 
 
             time_new=time.perf_counter_ns()

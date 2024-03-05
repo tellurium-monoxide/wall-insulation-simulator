@@ -7,11 +7,11 @@ N_THREADS=str(os.cpu_count())
 N_THREADS_FREE=str(os.cpu_count()-1) # 1 thread is used for wx gui
 N_THREADS_PHYSICAL=str(os.cpu_count()//2) # 1 thread is used for wx gui
 N_THREADS_SERIAL= '1' # used to disable parallel
-os.environ["OMP_NUM_THREADS"] = N_THREADS_SERIAL # export OMP_NUM_THREADS=4
-os.environ["OPENBLAS_NUM_THREADS"] = N_THREADS_SERIAL # export OPENBLAS_NUM_THREADS=4 
-os.environ["MKL_NUM_THREADS"] = N_THREADS_SERIAL # export MKL_NUM_THREADS=6
-os.environ["VECLIB_MAXIMUM_THREADS"] = N_THREADS_SERIAL # export VECLIB_MAXIMUM_THREADS=4
-os.environ["NUMEXPR_NUM_THREADS"] = N_THREADS_SERIAL # export NUMEXPR_NUM_THREADS=6
+# os.environ["OMP_NUM_THREADS"] = N_THREADS_SERIAL # export OMP_NUM_THREADS=4
+# os.environ["OPENBLAS_NUM_THREADS"] = N_THREADS_SERIAL # export OPENBLAS_NUM_THREADS=4 
+# os.environ["MKL_NUM_THREADS"] = N_THREADS_SERIAL # export MKL_NUM_THREADS=6
+# os.environ["VECLIB_MAXIMUM_THREADS"] = N_THREADS_SERIAL # export VECLIB_MAXIMUM_THREADS=4
+# os.environ["NUMEXPR_NUM_THREADS"] = N_THREADS_SERIAL # export NUMEXPR_NUM_THREADS=6
 
 import psutil
 
@@ -288,13 +288,21 @@ class MainPanel(wx.Panel):
 # =============================================================================
         # manage main update
 
-
+        self.timer_update_redraw= wx.Timer(self)
+        self.timer_update_redraw.Start(40)
+        self.Bind(wx.EVT_TIMER, self.on_timer_redraw, self.timer_update_redraw)
 #        self.thread_update_loop = Thread(target=self.update_loop_thread)
 
 
 
 
-
+    def on_timer_redraw(self,event):
+        # self.update()
+        self.solver.needRedraw=True
+        self.redraw()
+        self.solver.time_last_redraw=time.perf_counter_ns()
+        self.solver.updates_since_redraw=0
+        self.solver.needRedraw=False
 
 
 
@@ -368,11 +376,36 @@ class MainPanel(wx.Panel):
         self.panel_fig_sliders.ctrl_inside_temp.update()
         self.panel_fig_sliders.ctrl_outside_temp.update()
         
-        # self.parent.update()
 
-
-
-
+class CustomStatusBar(wx.Panel):
+    def __init__(self,parent):
+        wx.Panel.__init__(self,parent)
+        self.parent=parent
+        self.localizer=parent.localizer
+        # self.solver=parent.solver
+        
+        
+        sizer_h=wx.BoxSizer(wx.HORIZONTAL)
+        
+        self.status_cpu=wx.StaticText(self)
+        
+        sizer_h.Add(self.status_cpu, 1, wx.EXPAND, 0)
+        
+        self.SetSizer(sizer_h)
+        
+    def update(self):
+        print("status")
+        self.set_status_cpu()
+        print("done")
+        
+        
+    def set_status_cpu(self):
+        # load1, load5, load15 = psutil.getloadavg()
+        # cpu_usage = (load15/os.cpu_count()) * 100
+        cpu_usage = psutil.cpu_percent()
+        # cpu_usage = 1
+ 
+        self.status_cpu.SetLabel("CPU usage: %g" % cpu_usage)
 class MainFrame(wx.Frame):
     def __init__(self):
         super().__init__(parent=None, title='wall-simulator', style=wx.DEFAULT_FRAME_STYLE)
@@ -423,7 +456,10 @@ class MainFrame(wx.Frame):
         self.SetMenuBar(menubar)
         
         
-        self.status_bar=self.CreateStatusBar(number=2)
+        
+        
+        # self.status_bar=CustomStatusBar(self)
+        self.status_bar=self.CreateStatusBar()
         
 
 
@@ -432,6 +468,7 @@ class MainFrame(wx.Frame):
         self.sizer_v = wx.BoxSizer(wx.VERTICAL)
 
         self.sizer_v.Add(self.main_panel, 1, wx.EXPAND, 0)
+        # self.sizer_v.Add(self.status_bar, 0, wx.EXPAND, 0)
 
 
         self.SetSizer(self.sizer_v)
@@ -439,15 +476,10 @@ class MainFrame(wx.Frame):
         
         
         
-        self.timer_update_redraw= wx.Timer(self)
-        self.timer_update_redraw.Start(40)
         
         self.timer_update_status= wx.Timer(self)
-        self.timer_update_status.Start(1000)
-
-
-        self.Bind(wx.EVT_TIMER, self.on_timer_redraw, self.timer_update_redraw)
-        # self.Bind(wx.EVT_TIMER, self.update_status, self.timer_update_status)
+        self.timer_update_status.Start(200)
+        self.Bind(wx.EVT_TIMER, self.on_timer_status, self.timer_update_status)
 # =============================================================================
 # show the frame
 # =============================================================================
@@ -456,31 +488,30 @@ class MainFrame(wx.Frame):
         self.Show()
         
         
-    def on_timer_redraw(self,event):
-        self.update()
+
         
-    def update(self):
-        self.main_panel.update()
-        # self.set_status_cpu()
-    def update_status(self, event):
+    # def update(self):
         # self.main_panel.update()
-        print("status")
-        self.set_status_cpu()
-        print("done")
+        # wx.Yield()
         
+    def on_timer_status(self, event):
+        # self.status_bar.update()
+        self.set_status_cpu()
+
         
     def set_status_cpu(self):
         # load1, load5, load15 = psutil.getloadavg()
         # cpu_usage = (load15/os.cpu_count()) * 100
-        cpu_usage = psutil.cpu_percent(5)
+        cpu_usage = psutil.cpu_percent()
+        # cpu_usage = 1
  
-        self.status_bar.SetStatusText("CPU usage: %g" % cpu_usage, i=1)
+        self.status_bar.SetStatusText("CPU usage: %g" % cpu_usage)
+
 
     def on_close(self,event):
         self.main_panel.timer_update_redraw.Stop()
-        if self.main_panel.solver.run_sim:
-
-            self.main_panel.solver.run_sim=False
+        self.timer_update_status.Stop()
+        self.main_panel.solver.run_sim=False
         print(self.localizer.missing)
         event.Skip()
 

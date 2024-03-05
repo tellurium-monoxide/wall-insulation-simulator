@@ -28,13 +28,11 @@ long_line_behaviour=2
 long_line_column=72
 
 [files]
-current_page=1
-FILE_NAME_0=351;Python;0;EUTF-8;0;1;1;%2Fhome%2FcatB%2Ftb266682%2FDocuments%2FSaved%2Fcode%2Fprojets_perso%2Fwall-insulation-simulator%2Fsrc%2Fmodules%2Fhelpers%2Ftime_formatting.py;0;4
-FILE_NAME_1=14176;Python;0;EUTF-8;0;1;1;%2Fhome%2FcatB%2Ftb266682%2FDocuments%2FSaved%2Fcode%2Fprojets_perso%2Fwall-insulation-simulator%2Fsrc%2Fmain.py;0;4
-FILE_NAME_2=18788;Python;0;EUTF-8;0;1;1;%2Fhome%2FcatB%2Ftb266682%2FDocuments%2FSaved%2Fcode%2Fprojets_perso%2Fwall-insulation-simulator%2Fsrc%2Fmodules%2Fphysics%2Fsolver.py;0;4
-FILE_NAME_3=992;Python;0;EUTF-8;0;1;1;%2Fhome%2FcatB%2Ftb266682%2FDocuments%2FSaved%2Fcode%2Fprojets_perso%2Fwall-insulation-simulator%2F.%2Fsrc%2Fmodules%2Fgui%2Fanimated_figure.py;0;4
-FILE_NAME_4=1293;Python;0;EUTF-8;0;1;1;%2Fhome%2FcatB%2Ftb266682%2FDocuments%2FSaved%2Fcode%2Fprojets_perso%2Fwall-insulation-simulator%2Fsrc%2Fmodules%2Fgui%2Ftemperature_controller%2Fcontroller_outside_temp.py;0;4
-FILE_NAME_5=2212;Python;0;EUTF-8;0;1;1;%2Fhome%2FcatB%2Ftb266682%2FDocuments%2FSaved%2Fcode%2Fprojets_perso%2Fwall-insulation-simulator%2Fsrc%2Fmodules%2Fphysics%2Ftemperature_cycle.py;0;4
+current_page=0
+FILE_NAME_0=17376;Python;0;EUTF-8;0;1;1;Y%3A%5CDocuments%5CCode%5Cwall-insulation-simulator%5Csrc%5Cmain.py;0;4
+FILE_NAME_1=439;Python;0;EUTF-8;0;1;1;Y%3A%5CDocuments%5CCode%5Cwall-insulation-simulator%5Csrc%5Cmodules%5Cphysics%5Csolver.py;0;4
+FILE_NAME_2=1792;Python;0;EUTF-8;0;1;1;Y%3A%5CDocuments%5CCode%5Cwall-insulation-simulator%5Csrc%5Cmodules%5Cgui%5Ctemperature_controller%5Ccontroller_outside_temp.py;0;4
+FILE_NAME_3=1281;Python;0;EUTF-8;0;1;1;Y%3A%5CDocuments%5CCode%5Cwall-insulation-simulator%5Csrc%5Cmodules%5Cgui%5Canimated_figure.py;0;4
 
 [build-menu]
 EX_00_LB=_Exécuter
