@@ -55,7 +55,7 @@ class ControlOutsideTemp(wx.Panel):
         self.check.Bind(wx.EVT_CHECKBOX, self.on_check)
         self.button_show_cycle.Bind(wx.EVT_BUTTON, self.on_show_cycle)
         
-        # self.viz=CycleVisualizer(self)
+        self.viz=CycleVisualizer(self)
         
 
 
@@ -81,8 +81,8 @@ class ControlOutsideTemp(wx.Panel):
         if (self.check.IsChecked()):
             self.slider_Tout.SetValue(int(self.solver.Tout))
             
-        # if self.viz.IsShown():
-            # self.viz.update()
+        if self.viz.IsShown():
+            self.viz.update()
             
 
 
@@ -92,7 +92,7 @@ class ControlOutsideTemp(wx.Panel):
 
 class CycleVisualizer(wx.Frame):
     def __init__(self, parent):
-        wx.Frame.__init__(self, parent)
+        wx.Frame.__init__(self, parent, style=wx.DEFAULT_FRAME_STYLE | wx.FRAME_FLOAT_ON_PARENT)
 
         self.parent=parent
         self.solver=parent.solver

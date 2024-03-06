@@ -4,3 +4,4 @@ pyinstaller/dist
 *.spec
 .spyproject*
 venv*
+*.pstats

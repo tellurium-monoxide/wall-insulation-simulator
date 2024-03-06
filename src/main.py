@@ -5,13 +5,13 @@
 import os
 N_THREADS=str(os.cpu_count())
 N_THREADS_FREE=str(os.cpu_count()-1) # 1 thread is used for wx gui
-N_THREADS_PHYSICAL=str(os.cpu_count()//2) # 1 thread is used for wx gui
+N_THREADS_PHYSICAL=str(os.cpu_count()//2) # physical threads is half of logical threads
 N_THREADS_SERIAL= '1' # used to disable parallel
-# os.environ["OMP_NUM_THREADS"] = N_THREADS_SERIAL # export OMP_NUM_THREADS=4
-# os.environ["OPENBLAS_NUM_THREADS"] = N_THREADS_SERIAL # export OPENBLAS_NUM_THREADS=4 
-# os.environ["MKL_NUM_THREADS"] = N_THREADS_SERIAL # export MKL_NUM_THREADS=6
-# os.environ["VECLIB_MAXIMUM_THREADS"] = N_THREADS_SERIAL # export VECLIB_MAXIMUM_THREADS=4
-# os.environ["NUMEXPR_NUM_THREADS"] = N_THREADS_SERIAL # export NUMEXPR_NUM_THREADS=6
+os.environ["OMP_NUM_THREADS"] = N_THREADS_SERIAL
+os.environ["OPENBLAS_NUM_THREADS"] = N_THREADS_SERIAL
+os.environ["MKL_NUM_THREADS"] = N_THREADS_SERIAL
+os.environ["VECLIB_MAXIMUM_THREADS"] = N_THREADS_SERIAL
+os.environ["NUMEXPR_NUM_THREADS"] = N_THREADS_SERIAL
 
 import psutil
 
@@ -37,6 +37,9 @@ from modules.gui.temperature_controller.controller_inside_temp import ControlIns
 from modules.gui.temperature_controller.controller_outside_temp import ControlOutsideTemp
 from modules.gui.events import *
 from modules.gui.animated_figure import PanelAnimatedFigure
+
+from modules.gui.sliders.slider_log import SliderLog
+from modules.gui.sliders.slider_float import SliderFloat
 
 
 
@@ -147,9 +150,9 @@ class PanelSolverInfo(wx.Panel):
         Nx= sum([layer.Npoints for layer in solver.wall.layers])
         text_nx="Nx= %d (" % Nx + str([layer.Npoints for layer in solver.wall.layers]) + ")"
         self.info_Nx.SetLabel(text_nx)
-        limiter=(solver.steps_to_statio/solver.limiter_ratio)
-        self.info_limit.SetLabel("limiter = %g" % limiter)
-        self.info_ups.SetLabel("ups = %g" % self.solver.this_run_ups)
+        limiter=(solver.simulation_time_per_sec)
+        self.info_limit.SetLabel("sim speed = %g / %g" % (solver.simulation_time_per_sec/60, solver.max_simulation_time_per_sec/60))
+        self.info_ups.SetLabel("ups = %g" % self.solver.steps_per_sec_redraw)
         self.Fit()
         self.Thaw()
 
@@ -189,17 +192,31 @@ class PanelSimulationControls(wx.Panel):
         
         self.check_use_sparse = wx.CheckBox(self, label="sparse?")
         sizer_h.Add(self.check_use_sparse, 0, wx.ALL, space)
+        
+        self.slider_sim_speed = SliderLog(self,minValue=60, maxValue=36000*3, nsteps=1000, orientation="h")
+        self.slider_sim_speed.SetValue(self.solver.goal_simulation_time_per_sec)
+        
+        sizer_h.Add(self.slider_sim_speed,1,wx.EXPAND, 0)
 
         self.SetSizer(sizer_h)
         self.Fit()
         
         # Bindings
-
+        self.button_statio.Bind(wx.EVT_BUTTON, self.on_press_statio)
         self.check_use_sparse.Bind(wx.EVT_CHECKBOX, self.on_check_use_sparse)
+        self.slider_sim_speed.Bind(wx.EVT_SLIDER, self.on_slide_sim_speed)
         
     def on_check_use_sparse(self, event):
         
         self.solver.use_sparse=event.IsChecked()
+    def on_press_statio(self,event):
+        self.solver.solve_stationnary()
+        self.solver.time=0
+        # self.redraw()
+        
+    def on_slide_sim_speed(self,event):
+        v=self.slider_sim_speed.GetValue()
+        self.solver.goal_simulation_time_per_sec=v
 
 class MainPanel(wx.Panel):
     def __init__(self,parent):
@@ -239,13 +256,13 @@ class MainPanel(wx.Panel):
 
         self.panel_menu.button_run.Bind(wx.EVT_BUTTON, self.on_press_run)
         self.panel_menu.button_adv.Bind(wx.EVT_BUTTON, self.on_press_advance)
-        self.panel_menu.button_statio.Bind(wx.EVT_BUTTON, self.on_press_statio)
+        
         self.panel_menu.button_reset.Bind(wx.EVT_BUTTON, self.on_press_reset)
 
 
 
 
-        self.sizer_v.Add(self.panel_menu,0, wx.ALL,2)
+        self.sizer_v.Add(self.panel_menu,0, wx.ALL| wx.EXPAND,2)
 # =============================================================================
 # panel to show animated figure
 # =============================================================================
@@ -291,18 +308,26 @@ class MainPanel(wx.Panel):
         self.timer_update_redraw= wx.Timer(self)
         self.timer_update_redraw.Start(40)
         self.Bind(wx.EVT_TIMER, self.on_timer_redraw, self.timer_update_redraw)
-#        self.thread_update_loop = Thread(target=self.update_loop_thread)
+
 
 
 
 
     def on_timer_redraw(self,event):
-        # self.update()
         self.solver.needRedraw=True
-        self.redraw()
-        self.solver.time_last_redraw=time.perf_counter_ns()
-        self.solver.updates_since_redraw=0
+        self.update()
         self.solver.needRedraw=False
+        
+    def update(self):
+        self.panel_info.update_info(self.solver)
+        if self.solver.need_init_plot:
+            self.solver.init_plot()
+        else:
+            self.solver.update_plot()
+        # self.panel_fig_sliders.panelfig.LoadFigure(self.solver.figure)
+        self.panel_fig_sliders.panelfig.Refresh()
+        self.panel_fig_sliders.ctrl_inside_temp.update()
+        self.panel_fig_sliders.ctrl_outside_temp.update()
 
 
 
@@ -321,13 +346,11 @@ class MainPanel(wx.Panel):
             self.thread_update_loop.join()
             self.localizer.link(self.panel_menu.button_run.SetLabel, "run_button", "run_button")
             self.panel_menu.button_adv.Enable()
+        self.panel_menu.Layout()
 
 
 
-    def on_press_statio(self,event):
-        self.solver.solve_stationnary()
-        self.solver.time=0
-        # self.redraw()
+
 
     def on_press_reset(self,event):
         self.solver.remesh()
@@ -343,24 +366,6 @@ class MainPanel(wx.Panel):
         self.redraw()
         
     
-    def update(self):
-        self.solver.needRedraw=True
-        self.redraw()
-        self.solver.time_last_redraw=time.perf_counter_ns()
-        self.solver.updates_since_redraw=0
-        self.solver.needRedraw=False
-        
-
-
-
-        
-
-        
-        
-        # ~ print("updates since last redraw ",self.updates_since_redraw)
-        # ~ print("time since last redraw ",self.time_since_redraw/1e6, 'ms')
-        # ~ print("updates per seconds :",1e9*self.this_run_updates/self.this_run_time)
-        # ~ print("progression to statio :",self.solver.time_to_statio/(self.solver.time+self.solver.dt))
 
        
 
@@ -368,13 +373,7 @@ class MainPanel(wx.Panel):
 
 
 
-    def redraw(self):
-        self.panel_info.update_info(self.solver)
-        self.solver.draw()
-        # self.panel_fig_sliders.panelfig.LoadFigure(self.solver.figure)
-        self.panel_fig_sliders.panelfig.Refresh()
-        self.panel_fig_sliders.ctrl_inside_temp.update()
-        self.panel_fig_sliders.ctrl_outside_temp.update()
+
         
 
 class CustomStatusBar(wx.Panel):

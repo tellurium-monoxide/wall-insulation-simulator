@@ -21,18 +21,25 @@ indent_mode=2
 name=wall-insulation-simulator
 base_path=.
 description=
-file_patterns=*.py;
+file_patterns=*.py;*.sh;
 
 [long line marker]
 long_line_behaviour=2
 long_line_column=72
 
 [files]
-current_page=0
-FILE_NAME_0=17376;Python;0;EUTF-8;0;1;1;Y%3A%5CDocuments%5CCode%5Cwall-insulation-simulator%5Csrc%5Cmain.py;0;4
-FILE_NAME_1=439;Python;0;EUTF-8;0;1;1;Y%3A%5CDocuments%5CCode%5Cwall-insulation-simulator%5Csrc%5Cmodules%5Cphysics%5Csolver.py;0;4
-FILE_NAME_2=1792;Python;0;EUTF-8;0;1;1;Y%3A%5CDocuments%5CCode%5Cwall-insulation-simulator%5Csrc%5Cmodules%5Cgui%5Ctemperature_controller%5Ccontroller_outside_temp.py;0;4
-FILE_NAME_3=1281;Python;0;EUTF-8;0;1;1;Y%3A%5CDocuments%5CCode%5Cwall-insulation-simulator%5Csrc%5Cmodules%5Cgui%5Canimated_figure.py;0;4
+current_page=10
+FILE_NAME_0=7197;Python;0;EUTF-8;0;1;1;%2Fhome%2FcatB%2Ftb266682%2FDocuments%2FSaved%2Fcode%2Fprojets_perso%2Fwall-insulation-simulator%2Fsrc%2Fmain.py;0;4
+FILE_NAME_1=23118;Python;0;EUTF-8;0;1;1;%2Fhome%2FcatB%2Ftb266682%2FDocuments%2FSaved%2Fcode%2Fprojets_perso%2Fwall-insulation-simulator%2Fsrc%2Fmodules%2Fphysics%2Fsolver.py;0;4
+FILE_NAME_2=570;Python;0;EUTF-8;0;1;1;%2Fhome%2FcatB%2Ftb266682%2FDocuments%2FSaved%2Fcode%2Fprojets_perso%2Fwall-insulation-simulator%2Fsrc%2Fmodules%2Fgui%2Fanimated_figure.py;0;4
+FILE_NAME_3=2143;Python;0;EUTF-8;0;1;1;%2Fhome%2FcatB%2Ftb266682%2FDocuments%2FSaved%2Fcode%2Fprojets_perso%2Fwall-insulation-simulator%2Fsrc%2Fmodules%2Fgui%2Ftemperature_controller%2Fcontroller_outside_temp.py;0;4
+FILE_NAME_4=538;Python;0;EUTF-8;0;1;1;%2Fhome%2FcatB%2Ftb266682%2FDocuments%2FSaved%2Fcode%2Fprojets_perso%2Fwall-insulation-simulator%2Fsrc%2Fmodules%2Fgui%2Fwall_customizer%2Fmaterial_creator.py;0;4
+FILE_NAME_5=585;Python;0;EUTF-8;0;1;1;%2Fhome%2FcatB%2Ftb266682%2FDocuments%2FSaved%2Fcode%2Fprojets_perso%2Fwall-insulation-simulator%2Fsrc%2Fmodules%2Fgui%2Fsliders%2Fslider_float.py;0;4
+FILE_NAME_6=1209;Python;0;EUTF-8;0;1;1;%2Fhome%2FcatB%2Ftb266682%2FDocuments%2FSaved%2Fcode%2Fprojets_perso%2Fwall-insulation-simulator%2Fsrc%2Fmodules%2Fgui%2Fsliders%2Fslider_log.py;0;4
+FILE_NAME_7=808;Python;0;EUTF-8;0;1;1;%2Fhome%2FcatB%2Ftb266682%2FDocuments%2FSaved%2Fcode%2Fprojets_perso%2Fwall-insulation-simulator%2Fsrc%2Fmodules%2Fgui%2Fsliders%2Fslider_custom_base.py;0;4
+FILE_NAME_8=31;Python;0;EUTF-8;0;1;1;%2Fhome%2FcatB%2Ftb266682%2FDocuments%2FSaved%2Fcode%2Fprojets_perso%2Fwall-insulation-simulator%2Fpyinstaller%2Finstall.py;0;4
+FILE_NAME_9=31;Sh;0;EUTF-8;0;1;1;%2Fhome%2FcatB%2Ftb266682%2FDocuments%2FSaved%2Fcode%2Fprojets_perso%2Fwall-insulation-simulator%2F.%2Fprofiling%2Fstart_profiling.sh;0;4
+FILE_NAME_10=363;Python;0;EUTF-8;0;1;1;%2Fhome%2FcatB%2Ftb266682%2FDocuments%2FSaved%2Fcode%2Fprojets_perso%2Fwall-insulation-simulator%2F.%2Fprofiling%2Fanalyze_stats.py;0;4
 
 [build-menu]
 EX_00_LB=_Exécuter
@@ -43,17 +50,29 @@ PythonFT_02_CM=/home/catB/tb266682/.venv-junest/bin/python3 -m pep8 --max-line-l
 PythonFT_02_WD=
 filetypes=Python;
 PythonFT_00_LB=_Compile
-PythonFT_00_CM=python3 "%p/pyinstaller/install.py"
+PythonFT_00_CM=python "%p/pyinstaller/install.py"
 PythonFT_00_WD=
 PythonFT_01_LB=
 PythonFT_01_CM=
 PythonFT_01_WD=
+NF_00_LB=profile
+NF_00_CM=python -m cProfile -o "%p/profiling/wis.pstats" "%p/src/main.py"
+NF_00_WD=
+EX_01_LB=analyze profiling
+EX_01_CM=python "%p/profiling/analyze_stats.py"
+EX_01_WD=
+NF_01_LB=
+NF_01_CM=
+NF_01_WD=
+NF_02_LB=
+NF_02_CM=
+NF_02_WD=
 
 [VTE]
 last_dir=/home/catB/tb266682
 
 [prjorg]
-source_patterns=*.py;
+source_patterns=*.py;*.sh;
 header_patterns=
 ignored_dirs_patterns=.*;CVS;__pycache__;
 ignored_file_patterns=*__init__*;
