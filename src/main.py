@@ -193,7 +193,7 @@ class PanelSimulationControls(wx.Panel):
         self.check_use_sparse = wx.CheckBox(self, label="sparse?")
         sizer_h.Add(self.check_use_sparse, 0, wx.ALL, space)
         
-        self.slider_sim_speed = SliderLog(self,minValue=60, maxValue=36000*3, nsteps=1000, orientation="h")
+        self.slider_sim_speed = SliderLog(self,minValue=3600, maxValue=36000*3, nsteps=1000, orientation="h")
         self.slider_sim_speed.SetValue(self.solver.goal_simulation_time_per_sec)
         
         sizer_h.Add(self.slider_sim_speed,1,wx.EXPAND, 0)

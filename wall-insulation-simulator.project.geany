@@ -28,18 +28,11 @@ long_line_behaviour=2
 long_line_column=72
 
 [files]
-current_page=10
-FILE_NAME_0=7197;Python;0;EUTF-8;0;1;1;%2Fhome%2FcatB%2Ftb266682%2FDocuments%2FSaved%2Fcode%2Fprojets_perso%2Fwall-insulation-simulator%2Fsrc%2Fmain.py;0;4
-FILE_NAME_1=23118;Python;0;EUTF-8;0;1;1;%2Fhome%2FcatB%2Ftb266682%2FDocuments%2FSaved%2Fcode%2Fprojets_perso%2Fwall-insulation-simulator%2Fsrc%2Fmodules%2Fphysics%2Fsolver.py;0;4
-FILE_NAME_2=570;Python;0;EUTF-8;0;1;1;%2Fhome%2FcatB%2Ftb266682%2FDocuments%2FSaved%2Fcode%2Fprojets_perso%2Fwall-insulation-simulator%2Fsrc%2Fmodules%2Fgui%2Fanimated_figure.py;0;4
-FILE_NAME_3=2143;Python;0;EUTF-8;0;1;1;%2Fhome%2FcatB%2Ftb266682%2FDocuments%2FSaved%2Fcode%2Fprojets_perso%2Fwall-insulation-simulator%2Fsrc%2Fmodules%2Fgui%2Ftemperature_controller%2Fcontroller_outside_temp.py;0;4
-FILE_NAME_4=538;Python;0;EUTF-8;0;1;1;%2Fhome%2FcatB%2Ftb266682%2FDocuments%2FSaved%2Fcode%2Fprojets_perso%2Fwall-insulation-simulator%2Fsrc%2Fmodules%2Fgui%2Fwall_customizer%2Fmaterial_creator.py;0;4
-FILE_NAME_5=585;Python;0;EUTF-8;0;1;1;%2Fhome%2FcatB%2Ftb266682%2FDocuments%2FSaved%2Fcode%2Fprojets_perso%2Fwall-insulation-simulator%2Fsrc%2Fmodules%2Fgui%2Fsliders%2Fslider_float.py;0;4
-FILE_NAME_6=1209;Python;0;EUTF-8;0;1;1;%2Fhome%2FcatB%2Ftb266682%2FDocuments%2FSaved%2Fcode%2Fprojets_perso%2Fwall-insulation-simulator%2Fsrc%2Fmodules%2Fgui%2Fsliders%2Fslider_log.py;0;4
-FILE_NAME_7=808;Python;0;EUTF-8;0;1;1;%2Fhome%2FcatB%2Ftb266682%2FDocuments%2FSaved%2Fcode%2Fprojets_perso%2Fwall-insulation-simulator%2Fsrc%2Fmodules%2Fgui%2Fsliders%2Fslider_custom_base.py;0;4
-FILE_NAME_8=31;Python;0;EUTF-8;0;1;1;%2Fhome%2FcatB%2Ftb266682%2FDocuments%2FSaved%2Fcode%2Fprojets_perso%2Fwall-insulation-simulator%2Fpyinstaller%2Finstall.py;0;4
-FILE_NAME_9=31;Sh;0;EUTF-8;0;1;1;%2Fhome%2FcatB%2Ftb266682%2FDocuments%2FSaved%2Fcode%2Fprojets_perso%2Fwall-insulation-simulator%2F.%2Fprofiling%2Fstart_profiling.sh;0;4
-FILE_NAME_10=363;Python;0;EUTF-8;0;1;1;%2Fhome%2FcatB%2Ftb266682%2FDocuments%2FSaved%2Fcode%2Fprojets_perso%2Fwall-insulation-simulator%2F.%2Fprofiling%2Fanalyze_stats.py;0;4
+current_page=2
+FILE_NAME_0=7660;Python;0;EUTF-8;0;1;1;Y%3A%5CDocuments%5CCode%5Cwall-insulation-simulator%5Csrc%5Cmain.py;0;4
+FILE_NAME_1=148;Python;0;EUTF-8;0;1;1;Y%3A%5CDocuments%5CCode%5Cwall-insulation-simulator%5Csrc%5Cmodules%5Cgui%5Ctemperature_controller%5Ccontroller_outside_temp.py;0;4
+FILE_NAME_2=8905;Python;0;EUTF-8;0;1;1;Y%3A%5CDocuments%5CCode%5Cwall-insulation-simulator%5Csrc%5Cmodules%5Cgui%5Ctemperature_controller%5Ccontroller_inside_temp.py;0;4
+FILE_NAME_3=3652;Python;0;EUTF-8;0;1;1;Y%3A%5CDocuments%5CCode%5Cwall-insulation-simulator%5Csrc%5Cmodules%5Cphysics%5Csolver.py;0;4
 
 [build-menu]
 EX_00_LB=_Exécuter

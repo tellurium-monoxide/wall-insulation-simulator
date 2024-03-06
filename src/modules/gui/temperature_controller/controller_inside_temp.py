@@ -1,10 +1,10 @@
 
 import math
 import wx
-
+from matplotlib.figure import Figure
 
 from ..controls_numeric_values.bounded_value import CtrlPositiveBoundedDecimal
-
+from ..animated_figure import PanelAnimatedFigure
 
 class ControlInsideTemp(wx.Panel):
 
@@ -22,9 +22,9 @@ class ControlInsideTemp(wx.Panel):
         # check box to activate the feature:
         use_txt= wx.StaticText(self, label="Activate ? ")
         self.check = wx.CheckBox(self)
-
+        self.button_trace_Tint=wx.Button(self, label="Trace Tint")
         sizer_h0 = wx.BoxSizer(wx.HORIZONTAL)
-        toadd= [ (w, 0, wx.ALIGN_CENTER, 0) for w in [use_txt,self.check]]
+        toadd= [ (w, 0, wx.ALIGN_CENTER, 0) for w in [use_txt,self.check, self.button_trace_Tint]]
         sizer_h0.AddMany(toadd)
         # room geometry:
 
@@ -116,6 +116,9 @@ class ControlInsideTemp(wx.Panel):
         self.hsp_input.Disable()
         self.L1_input.Disable()
         self.L2_input.Disable()
+        
+        
+        self.tracer=TracerTint(self)
 
         # Bindings
 
@@ -123,7 +126,8 @@ class ControlInsideTemp(wx.Panel):
         self.check_edit_room.Bind(wx.EVT_CHECKBOX, self.on_check_edit)
 
         self.slider_heat_gain.Bind(wx.EVT_SLIDER, self.on_slide_heat_gain)
-
+        self.button_trace_Tint.Bind(wx.EVT_BUTTON, self.on_trace_Tint)
+    
 
     def on_check_edit(self, event):
         self.hsp_input.Enable(enable=event.IsChecked())
@@ -138,6 +142,10 @@ class ControlInsideTemp(wx.Panel):
             self.solver.wall.room.set_shape((L1,L2,h))
 
 
+    def on_trace_Tint(self, event):
+        self.tracer.reset()
+        self.tracer.Show()
+        
     def on_check(self, event):
         self.solver.Tint_is_variable =  event.IsChecked()
         self.slider_heat_gain.Enable(enable=event.IsChecked())
@@ -189,8 +197,78 @@ class ControlInsideTemp(wx.Panel):
             self.slider_heat_gain.SetValue(heat_loss)
         else:
             self.slider_Tint.SetValue(int(self.solver.Tint))
+            
+        if self.tracer.IsShown():
+            self.tracer.update()
 
 
 
 
+class TracerTint(wx.Frame):
+    def __init__(self, parent):
+        wx.Frame.__init__(self, parent, style=wx.DEFAULT_FRAME_STYLE | wx.FRAME_FLOAT_ON_PARENT)
 
+        self.parent=parent
+        self.solver=parent.solver
+        self.localizer=parent.localizer
+        
+        self.SetTitle("Trace inside temperature")
+        
+        
+        self.figure = Figure()
+        self.ax=self.figure.subplots()
+        self.tdata = [self.solver.time]
+        self.data_Tint = [self.solver.Tint]
+        self.data_Tout = [self.solver.Tout]
+        self.plot_Tint,=self.ax.plot(self.tdata,self.data_Tint, label="Tint")
+        self.plot_Tout,=self.ax.plot(self.tdata,self.data_Tout, label="Tout")
+        self.ax.legend()
+        
+        self.panel_fig = PanelAnimatedFigure(self, self.figure, minsize=(500,300))
+
+        self.button_reset=wx.Button(self, label="Reset trace")
+        
+        sizer=wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(self.button_reset, 0, wx.ALL, 4)
+        sizer.Add(self.panel_fig, 1, wx.EXPAND, 0)
+        
+        
+        self.SetSizer(sizer)
+        sizer.SetSizeHints(self)
+        self.Layout()
+        
+        self.Bind(wx.EVT_CLOSE , self.on_close)
+        self.button_reset.Bind(wx.EVT_BUTTON , self.on_button_reset)
+        
+        
+        
+        
+        # self.Show()
+
+
+    def on_close(self,event):
+        self.parent.button_trace_Tint.Enable()
+        self.Hide()
+
+
+    def update(self):
+        self.tdata.append(self.solver.time)
+        self.data_Tint.append(self.solver.Tint)
+        self.data_Tout.append(self.solver.Tout)
+        self.plot_Tint.set_data(self.tdata, self.data_Tint)
+        self.plot_Tout.set_data(self.tdata, self.data_Tout)
+        # self.ax.set_xlim(self.tdata[0], self.tdata[-1]+1)
+        # self.ax.set_ylim(min(self.ydata)-1, max(self.ydata)+1)
+        self.ax.relim()
+        self.ax.autoscale_view()
+        self.panel_fig.Refresh()
+        # self.Layout()
+        
+    def on_button_reset(self, event):
+        self.reset()
+    def reset(self):
+        self.tdata = [self.solver.time]
+        self.data_Tint = [self.solver.Tint]
+        self.data_Tout = [self.solver.Tout]
+        self.plot_Tint.set_data(self.tdata, self.data_Tint)
+        self.plot_Tout.set_data(self.tdata, self.data_Tout)

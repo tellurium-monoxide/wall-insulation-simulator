@@ -96,7 +96,7 @@ class SolverHeatEquation1dMultilayer:
         self.need_init_plot=True
     def remesh_explicit(self):
         current_length=0
-        self.time=0
+        # self.time=0
 
         # best_dt=min(self.wall.layers, key = lambda x:x.Npoints)
         # if len(self.wall.layers)>0:
@@ -137,7 +137,7 @@ class SolverHeatEquation1dMultilayer:
 
     def remesh_implicit(self):
         current_length=0
-        self.time=0
+        # self.time=0
         self.dt=60
 
         if len(self.wall.layers)>0:
