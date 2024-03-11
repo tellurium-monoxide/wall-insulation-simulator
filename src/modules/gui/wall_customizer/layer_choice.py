@@ -49,6 +49,8 @@ class PanelLayer(wx.Panel):
         # self.button_add= wx.Button(self, label="+", style=wx.BU_EXACTFIT)
         self.button_add= wx.BitmapButton(self, bitmap=wx.ArtProvider.GetBitmap(wx.ART_PLUS), style=wx.BU_EXACTFIT)
         self.button_add.SetToolTip("Add a layer to the right of this one")
+        self.button_move_right= wx.BitmapButton(self, bitmap=wx.ArtProvider.GetBitmap(wx.ART_GO_FORWARD), style=wx.BU_EXACTFIT)
+        self.button_move_right.SetToolTip("Move this layer to the right")
 
 
         # add everything to sizers
@@ -60,6 +62,7 @@ class PanelLayer(wx.Panel):
         self.sizer_v2 = wx.BoxSizer(wx.VERTICAL)
         self.sizer_v2.Add(self.button_add,1,wx.ALL,2)
         self.sizer_v2.Add(self.button_rem,1,wx.ALL,2)
+        self.sizer_v2.Add(self.button_move_right,1,wx.ALL,2)
         
 
         self.sizer_h = wx.BoxSizer(wx.HORIZONTAL)
@@ -142,11 +145,13 @@ class PanelLayer(wx.Panel):
         self.typechoice.Disable()
         self.button_rem.Disable()
         self.button_add.Disable()
+        self.button_move_right.Disable()
 
     def enable_input(self):
         self.input_layer_width.Enable()
         self.typechoice.Enable()
         self.button_rem.Enable()
         self.button_add.Enable()
+        self.button_move_right.Enable()
 
 

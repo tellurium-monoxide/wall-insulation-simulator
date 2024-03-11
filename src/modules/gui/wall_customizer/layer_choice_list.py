@@ -54,7 +54,19 @@ class PanelLayerList(wx.Panel):
         self.add_layer(pos=pos)
     def on_press_remove(self, event, pos=None):
         self.remove_layer(pos=pos)
+        
+        
+    def on_press_move_right(self, event, pos=None):
+        self.swap_layer(pos, pos+1)
 
+
+    def swap_layer(self,i,j):
+        n=len(self.list_of_panel_layer)
+        if i<n and j<n:
+            l1=self.list_of_panel_layer[i].get_layer()
+            l2=self.list_of_panel_layer[j].get_layer()
+            self.list_of_panel_layer[i].set_layer(l2)
+            self.list_of_panel_layer[j].set_layer(l1)
 
     def on_press_add_begin(self, event):
         self.add_layer(0)
@@ -71,6 +83,7 @@ class PanelLayerList(wx.Panel):
             self.sizer_h.Add(lay, 0, wx.LEFT, 3)
             lay.button_rem.Bind(wx.EVT_BUTTON, partial(self.on_press_remove,pos=i))
             lay.button_add.Bind(wx.EVT_BUTTON, partial(self.on_press_add,pos=i+1))
+            lay.button_move_right.Bind(wx.EVT_BUTTON, partial(self.on_press_move_right,pos=i))
 
         self.SetSizer(self.sizer_h, deleteOld=True)
         self.Fit()
