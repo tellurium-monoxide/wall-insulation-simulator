@@ -9,6 +9,7 @@ class MyLocalizer(Localizer):
         self.add_lang("en")
         self.add_lang("fr")
 
+        # main frame
         self.texts["en"]["menu_file"]="File"
         self.texts["fr"]["menu_file"]="Fichier"
 
@@ -23,7 +24,9 @@ class MyLocalizer(Localizer):
 
         self.texts["en"]["menu_help"]="Help"
         self.texts["fr"]["menu_help"]="Aide"
-
+        
+        
+        # temperature graph
         self.texts["en"]["plot_text_inside"]="Inside"
         self.texts["fr"]["plot_text_inside"]="Intérieur"
 
@@ -50,6 +53,7 @@ class MyLocalizer(Localizer):
 
         self.texts["en"]["button_reset"]="Reset"
         self.texts["fr"]["button_reset"]="Réinitialiser"
+        self.texts["fr"]["button_advanced"]="Options solveur"
 
 
 

@@ -156,8 +156,25 @@ class PanelSolverInfo(wx.Panel):
         self.Fit()
         self.Thaw()
 
-
-
+class FrameSolverAdvancedSettings(wx.Frame):
+    def __init__(self,parent):
+        wx.Frame.__init__(self,parent)
+        self.parent=parent
+        self.localizer=parent.localizer
+        self.solver=parent.solver
+        space=5
+        sizer_h = wx.BoxSizer(wx.HORIZONTAL)
+        
+        self.check_use_sparse = wx.CheckBox(self, label="sparse?")
+        sizer_h.Add(self.check_use_sparse, 0, wx.ALL, space)
+        
+        self.SetSizer(sizer_h)
+        self.Fit()
+        self.check_use_sparse.Bind(wx.EVT_CHECKBOX, self.on_check_use_sparse)
+        
+    def on_check_use_sparse(self, event):
+        
+        self.solver.use_sparse=event.IsChecked()
 class PanelSimulationControls(wx.Panel):
     def __init__(self,parent):
         wx.Panel.__init__(self,parent)
@@ -165,7 +182,7 @@ class PanelSimulationControls(wx.Panel):
         self.localizer=parent.localizer
         self.solver=parent.solver
 
-        space=5
+        space=2
         sizer_h = wx.BoxSizer(wx.HORIZONTAL)
 
         self.button_run = wx.Button(self)
@@ -186,12 +203,15 @@ class PanelSimulationControls(wx.Panel):
         sizer_h.Add(self.button_statio, 0, wx.ALL, space)
 
         self.button_reset = wx.Button(self)
-        self.localizer.link(self.button_reset.SetLabel, "button_reset", "button_reset", text="")
+        self.localizer.link(self.button_reset.SetLabel, "button_reset", "button_reset", text="Reset")
         # self.localizer.link(self.button_statio.SetToolTip, "button_reset_tooltip", "button_reset_tooltip")
         sizer_h.Add(self.button_reset, 0, wx.ALL, space)
         
-        self.check_use_sparse = wx.CheckBox(self, label="sparse?")
-        sizer_h.Add(self.check_use_sparse, 0, wx.ALL, space)
+        self.button_advanced = wx.Button(self)
+        self.localizer.link(self.button_advanced.SetLabel, "button_advanced", "button_advanced", text="Advanced settings")
+        sizer_h.Add(self.button_advanced, 0, wx.ALL, space)
+        
+
         
         self.slider_sim_speed = SliderLog(self,minValue=3600, maxValue=36000*3, nsteps=1000, orientation="h")
         self.slider_sim_speed.SetValue(self.solver.goal_simulation_time_per_sec)
@@ -203,12 +223,11 @@ class PanelSimulationControls(wx.Panel):
         
         # Bindings
         self.button_statio.Bind(wx.EVT_BUTTON, self.on_press_statio)
-        self.check_use_sparse.Bind(wx.EVT_CHECKBOX, self.on_check_use_sparse)
+        self.button_advanced.Bind(wx.EVT_BUTTON, self.on_press_advanced_settings)
+
         self.slider_sim_speed.Bind(wx.EVT_SLIDER, self.on_slide_sim_speed)
         
-    def on_check_use_sparse(self, event):
-        
-        self.solver.use_sparse=event.IsChecked()
+
     def on_press_statio(self,event):
         self.solver.solve_stationnary()
         self.solver.time=0
@@ -217,6 +236,9 @@ class PanelSimulationControls(wx.Panel):
     def on_slide_sim_speed(self,event):
         v=self.slider_sim_speed.GetValue()
         self.solver.goal_simulation_time_per_sec=v
+    def on_press_advanced_settings(self,event):
+        f=FrameSolverAdvancedSettings(self)
+        f.Show()
 
 class MainPanel(wx.Panel):
     def __init__(self,parent):
@@ -363,7 +385,7 @@ class MainPanel(wx.Panel):
 
     def on_press_advance(self,event):
         self.solver.advance_time()
-        self.redraw()
+        # self.redraw()
         
     
 
