@@ -15,7 +15,7 @@ try:
         '--distpath', os.path.join(install_dir,"dist"),
         '--workpath', os.path.join(install_dir,"build"),
         '--windowed',
-        '--name', 'wall-simulator'
+        '--name', 'wall-insulation-simulator'
     ])
 except Exception:
     print("Failed install")
